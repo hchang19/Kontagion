@@ -27,6 +27,7 @@ public:
     int getActorsCount() const;
     std::vector<Actor*> getActors() const;
     void fireSpray();
+    void fireFlame();
 private:
     Actor * m_player;
     std::vector<Actor*> m_Actors;

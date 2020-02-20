@@ -57,7 +57,7 @@ Socrates::Socrates(StudentWorld* world)
 	pos_angle = 180;
 	m_nFlame = 5;
 	m_nSpray = 20;
-	addSpray = false;
+	addSpray = true;
 }
 
 void Socrates::updateFlame(int f) {
@@ -81,6 +81,7 @@ void Socrates::doSomething() {
 	if (getWorld()->getKey(keyPressed)) {
 		const double PI = 4 * atan(1);
 		double newX, newY;
+		addSpray = false;
 		switch (keyPressed) {
 		case KEY_PRESS_LEFT:
 			pos_angle -= 5;
@@ -91,19 +92,34 @@ void Socrates::doSomething() {
 		case KEY_PRESS_SPACE:
 			if (m_nSpray > 0) {
 				getWorld()->fireSpray();
+				getWorld()->playSound(SOUND_PLAYER_SPRAY);
+				m_nSpray--;
 			}
 			break;
 		case KEY_PRESS_ENTER:
+			if (m_nSpray > 0) {
+				getWorld()->fireFlame();
+				//getWorld()->playSound(SOUND_PLAYER_FIRE);
+				m_nFlame--;
+			}
 			break;
 		default:
 			return;
 		}
-
 		newX = VIEW_RADIUS * cos(pos_angle * 1.0 / 180 * PI) + VIEW_WIDTH / 2;
 		newY = VIEW_RADIUS * sin(pos_angle * 1.0 / 180 * PI) + VIEW_HEIGHT / 2;
 		moveTo(newX, newY);
 		setDirection(pos_angle + 180);
 	}
+	else {
+		if (!addSpray) {
+			addSpray = true;
+		}
+		else if(m_nSpray < 20){
+			m_nSpray++;
+		}
+	}
+		
 
 	//check for sprays
 	//TODO
@@ -153,7 +169,7 @@ void Food::doSomething() {
 ///Implementation of Ammo //parent of flame and spray
 ////////////////////////////////
 Ammo::Ammo(StudentWorld* world, double startX, double startY, int dir, double MaxDistance, int ImageID, int damage)
-:Actor(world, ImageID, startX, startY, dir, 1){
+:Actor(world, ImageID, startX, startY, dir, 1,1){
 	m_distance = 0;
 	m_initX = startX;
 	m_damage = damage;
@@ -164,26 +180,19 @@ Ammo::Ammo(StudentWorld* world, double startX, double startY, int dir, double Ma
  bool Ammo::canHit() const {
 	 return false;
 }
- 
- double Ammo::getInitX() const{
-	 return m_initX;
- }
-
- double Ammo::getInitY() const {
-	 return m_initY;
- }
-
 
  void Ammo::doSomething() {
 	 if (!isAlive()) {
 		 return;
 	 }
-
-	 if (calculateDistance(m_initX, m_initY, getX(), getY()) >= MAX_DISTANCE) {
-		 updateHealth(getHealth() - 1);
+	 m_distance = calculateDistance(m_initX, m_initY, getX(), getY());
+	 //check if it flied for too long
+	 if (m_distance >= MAX_DISTANCE) {
+		 //updateHealth(getHealth() - 1);
 		 return;
 	 }
 
+	 //loop through actors and detect if it ran into anything that can be hit
 	 Actor* temp; 
 	 for (int i = 0; i < getWorld()->getActorsCount(); i++) {
 		 temp = getWorld()->getActors()[i];
@@ -197,7 +206,7 @@ Ammo::Ammo(StudentWorld* world, double startX, double startY, int dir, double Ma
 		 }
 	 }
 
-	 moveAngle(getDirection(), SPRITE_RADIUS * 2); 
+	 moveAngle(getDirection(), SPRITE_WIDTH); 
 
  }
 
@@ -227,7 +236,6 @@ Ammo::Ammo(StudentWorld* world, double startX, double startY, int dir, double Ma
  //Auxilliary 
  ///////////////////////////////
  double calculateDistance(double startX, double startY, double finalX, double finalY) {
-	 double distance = sqrt(pow(finalX - startX, 2) + pow(finalY - startY, 2));
-
+	 int distance = sqrt(pow(finalX - startX, 2) + pow(finalY - startY, 2));
 	 return distance;
  }

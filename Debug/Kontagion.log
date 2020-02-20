@@ -1,5 +1,9 @@
-﻿  StudentWorld.cpp
+﻿  Actor.cpp
+C:\Users\Clonix\source\repos\CS32\Kontagion\Kontagion\Actor.cpp(112,26): warning C4244: 'argument': conversion from 'double' to 'Direction', possible loss of data
+C:\Users\Clonix\source\repos\CS32\Kontagion\Kontagion\Actor.cpp(241,16): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+  StudentWorld.cpp
 C:\Users\Clonix\source\repos\CS32\Kontagion\Kontagion\StudentWorld.cpp(50,22): warning C4018: '<': signed/unsigned mismatch
 C:\Users\Clonix\source\repos\CS32\Kontagion\Kontagion\StudentWorld.cpp(66,22): warning C4018: '<': signed/unsigned mismatch
 C:\Users\Clonix\source\repos\CS32\Kontagion\Kontagion\StudentWorld.cpp(91,20): warning C4018: '<': signed/unsigned mismatch
+  Generating Code...
   Kontagion.vcxproj -> C:\Users\Clonix\source\repos\CS32\Kontagion\Debug\Kontagion.exe

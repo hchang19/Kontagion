@@ -68,11 +68,9 @@ public:
 	Ammo(StudentWorld* world, double startX, double startY, int dir, double MaxDistance, int ImageID, int damage);
 	virtual void doSomething();
 	virtual bool canHit() const;
-	double getInitX() const;
-	double getInitY() const;
 private:
 	double m_distance;
-	int MAX_DISTANCE;
+	double MAX_DISTANCE;
 	int m_damage;
 	double m_initX, m_initY;
 

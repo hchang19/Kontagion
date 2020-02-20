@@ -70,8 +70,8 @@ int StudentWorld::init()
 					}
 				}
 			}
-			Actor* temp = new Dirt(this, x_pos, y_pos);
-			m_Actors.push_back(temp);
+			//Actor* temp = new Dirt(this, x_pos, y_pos);
+			//m_Actors.push_back(temp);
 			i++;
 		}
 	}
@@ -112,6 +112,29 @@ int StudentWorld::move()
 	return GWSTATUS_CONTINUE_GAME;
 }
 
+void StudentWorld::fireSpray() {
+	double x_pos, y_pos;
+	m_player->getPositionInThisDirection(m_player->getDirection(), SPRITE_WIDTH, x_pos, y_pos);
+	Actor* temp = new Spray(this, x_pos, y_pos, m_player->getDirection());
+	m_Actors.push_back(temp);
+}
+
+void StudentWorld::fireFlame() {
+	double x_pos, y_pos;
+	int temp_dir = m_player->getDirection();
+	for (int i = 0; i < 16; i++) {
+		m_player->getPositionInThisDirection(temp_dir, SPRITE_WIDTH, x_pos, y_pos);
+		Actor* temp = new Flame(this, x_pos, y_pos, temp_dir);
+		m_Actors.push_back(temp);
+		temp_dir += 22;
+	}
+
+
+
+
+
+
+}
 void StudentWorld::cleanUp()
 {
 	delete m_player;
