@@ -1,0 +1,5 @@
+﻿  StudentWorld.cpp
+C:\Users\Clonix\source\repos\CS32\Kontagion\Kontagion\StudentWorld.cpp(50,22): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Clonix\source\repos\CS32\Kontagion\Kontagion\StudentWorld.cpp(66,22): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Clonix\source\repos\CS32\Kontagion\Kontagion\StudentWorld.cpp(91,20): warning C4018: '<': signed/unsigned mismatch
+  Kontagion.vcxproj -> C:\Users\Clonix\source\repos\CS32\Kontagion\Debug\Kontagion.exe
