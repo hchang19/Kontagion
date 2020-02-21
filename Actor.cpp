@@ -1,7 +1,11 @@
 #include "Actor.h"
 #include "StudentWorld.h"
+#include <cmath>
+#include <stdlib.h>
+#include <algorithm>
+#include <math.h>
 // Students:  Add code to this file, Actor.h, StudentWorld.h, and StudentWorld.cpp
-
+using namespace std;
 ///////////////////////////////
 //Implementation of Actor Class
 ///////////////////////////////
@@ -97,7 +101,7 @@ void Socrates::doSomething() {
 			}
 			break;
 		case KEY_PRESS_ENTER:
-			if (m_nSpray > 0) {
+			if (m_nFlame > 0) {
 				getWorld()->fireFlame();
 				//getWorld()->playSound(SOUND_PLAYER_FIRE);
 				m_nFlame--;
@@ -188,7 +192,7 @@ Ammo::Ammo(StudentWorld* world, double startX, double startY, int dir, double Ma
 	 m_distance = calculateDistance(m_initX, m_initY, getX(), getY());
 	 //check if it flied for too long
 	 if (m_distance >= MAX_DISTANCE) {
-		 //updateHealth(getHealth() - 1);
+		 updateHealth(getHealth() - 1);
 		 return;
 	 }
 
@@ -229,13 +233,41 @@ Ammo::Ammo(StudentWorld* world, double startX, double startY, int dir, double Ma
 	 return;
  }
 
+ ///////////////////////
+//DROP CLASS - spec pg.33
+ /////////////////////////
+ Drop::Drop(StudentWorld* world, double startX, double startY, int ImageID, int sound, int level)
+	:Actor(world, ImageID, startX, startY, 0, 1, 1)
+ {
+	 m_time = 0;
+	 m_maxTime = (randInt(0, 300 - 10 * level - 1), 50);
+ }
 
+ void Drop::doSomething() {
+	 if (!isAlive()) {
+		 return;
+	 }
 
+	 if (m_time >= m_maxTime) {
+		 updateHealth(getHealth() - 1);
+		 return;
+	 }
+
+	 Actor* temp_player = getWorld()->getPlayer();
+	 if (calculateDistance(getX(), getY(), temp_player->getX(), temp_player->getY())) {
+		 doSpecialDrops();
+		 updateHealth(getHealth() - 1);
+		 return;
+	 }
+
+	 
+
+ }
 
  ///////////////////////////////
  //Auxilliary 
  ///////////////////////////////
  double calculateDistance(double startX, double startY, double finalX, double finalY) {
-	 int distance = sqrt(pow(finalX - startX, 2) + pow(finalY - startY, 2));
-	 return distance;
+	 double distance = sqrt(pow(finalX - startX, 2) + pow(finalY - startY, 2));
+	 return ceil(distance);
  }

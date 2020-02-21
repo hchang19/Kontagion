@@ -7,6 +7,7 @@
 #include <vector> 
 #include <cmath>
 #include <stdlib.h>  
+#include <algorithm>
 
 // Students:  Add code to this file, StudentWorld.cpp, Actor.h, and Actor.cpp
 
@@ -25,6 +26,7 @@ public:
 
     
     int getActorsCount() const;
+    Actor* getPlayer() const;
     std::vector<Actor*> getActors() const;
     void fireSpray();
     void fireFlame();

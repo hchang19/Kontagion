@@ -4,14 +4,16 @@
 #include "GraphObject.h"
 #include "StudentWorld.h"
 #include <cmath>
-
+#include <stdlib.h>
+#include <algorithm>
+#include <math.h>
 //base class for all actors
 class Actor :public GraphObject {
 public:
 	Actor(StudentWorld* world, int imageID, double startX, double startY, int dir = 0, int depth = 0, int health = 1);
 	virtual ~Actor();
 
-	bool isAlive() const; //return true if alive
+	bool isAlive() const; //return tr   ue if alive
 	StudentWorld* getWorld(); //pointer to the student world
 
 	virtual void doSomething() = 0;
@@ -82,13 +84,25 @@ public:
 	Flame(StudentWorld* world, double startX, double startY, int dir);
 };
 
-//Spray class - hose is down boi = spec pg . 30
+//Spray class - pew pew = spec pg . 30
 class Spray :public Ammo {
 public:
 	Spray(StudentWorld* world, double startX, double startY, int dir);
 };
 
+//Drops -  base class for goodies and fungus - spec pg. 33
 
+class Drop : public Actor {
+public:
+	Drop(StudentWorld* world, double startX, double startY, int ImageID, int sound, int level);
+	virtual void doSomething();
+private:
+	virtual void doSpecialDrops() = 0;
+	int m_time;
+	int m_maxTime;
+
+
+};
 
 //Auxilliary Functions
 double calculateDistance(double startX, double startY, double finalX, double finalY) ;
