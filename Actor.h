@@ -94,7 +94,7 @@ public:
 
 class Drop : public Actor {
 public:
-	Drop(StudentWorld* world, double startX, double startY, int ImageID, int sound, int level);
+	Drop(StudentWorld* world, double startX, double startY, int ImageID);
 	virtual void doSomething();
 private:
 	virtual void doSpecialDrops() = 0;
@@ -104,6 +104,47 @@ private:
 
 };
 
+///////////////////////
+//Restore Health////////
+//////////////////
+
+class RestoreHealth : public Drop {
+
+public:
+	RestoreHealth(StudentWorld* world, double startX, double startY);
+private:
+	virtual  void doSpecialDrops();
+};
+
+///////////////////////
+///Restore Flame
+//////////////////////
+class RestoreFlame : public Drop {
+
+public:
+	RestoreFlame(StudentWorld* world, double startX, double startY);
+private:
+	virtual  void doSpecialDrops();
+};
+
+////////////////////////
+////Extralife
+///////////////////
+
+class ExtraLife :public Drop {
+public:
+	ExtraLife(StudentWorld* world, double startX, double startY);
+private:
+	virtual void doSpecialDrops();
+};
+
+//////////////////////
+class Fungus :public Drop {
+public:
+	Fungus(StudentWorld* world, double startX, double startY);
+private:
+	virtual void doSpecialDrops();
+};
 //Auxilliary Functions
 double calculateDistance(double startX, double startY, double finalX, double finalY) ;
 #endif // ACTOR_H_

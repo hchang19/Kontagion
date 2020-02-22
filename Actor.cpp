@@ -103,7 +103,7 @@ void Socrates::doSomething() {
 		case KEY_PRESS_ENTER:
 			if (m_nFlame > 0) {
 				getWorld()->fireFlame();
-				//getWorld()->playSound(SOUND_PLAYER_FIRE);
+				getWorld()->playSound(SOUND_PLAYER_FIRE);
 				m_nFlame--;
 			}
 			break;
@@ -236,11 +236,11 @@ Ammo::Ammo(StudentWorld* world, double startX, double startY, int dir, double Ma
  ///////////////////////
 //DROP CLASS - spec pg.33
  /////////////////////////
- Drop::Drop(StudentWorld* world, double startX, double startY, int ImageID, int sound, int level)
+ Drop::Drop(StudentWorld* world, double startX, double startY, int ImageID)
 	:Actor(world, ImageID, startX, startY, 0, 1, 1)
  {
 	 m_time = 0;
-	 m_maxTime = (randInt(0, 300 - 10 * level - 1), 50);
+	 m_maxTime = max(randInt(0, 300 - (10 * getWorld()->getLevel()) - 1), 50);
  }
 
  void Drop::doSomething() {
@@ -248,21 +248,91 @@ Ammo::Ammo(StudentWorld* world, double startX, double startY, int dir, double Ma
 		 return;
 	 }
 
-	 if (m_time >= m_maxTime) {
-		 updateHealth(getHealth() - 1);
-		 return;
-	 }
+	 
 
 	 Actor* temp_player = getWorld()->getPlayer();
-	 if (calculateDistance(getX(), getY(), temp_player->getX(), temp_player->getY())) {
+	 if (calculateDistance(getX(), getY(), temp_player->getX(), temp_player->getY())<= SPRITE_WIDTH) {
 		 doSpecialDrops();
 		 updateHealth(getHealth() - 1);
 		 return;
 	 }
 
-	 
+	 if (m_time > m_maxTime) {
+		 updateHealth(getHealth() - 1);
+		 return;
+	 }
 
+
+	 m_time++;
  }
+
+ ////////////////
+ //Restore Health////
+ ////////////////
+
+ 
+RestoreHealth::RestoreHealth(StudentWorld* world, double startX, double startY) :
+		Drop(world,startX,startY,IID_RESTORE_HEALTH_GOODIE)
+	{
+		return;
+	}
+ 
+void RestoreHealth::doSpecialDrops() {
+	getWorld()->increaseScore(250);
+	getWorld()->playSound(SOUND_GOT_GOODIE);
+	getWorld()->getPlayer()->updateHealth(100);
+
+}
+
+
+ //////////////////////
+ //Restore Flame/////////
+ ////////////////////
+ 
+RestoreFlame::RestoreFlame(StudentWorld* world, double startX, double startY) :
+	Drop(world, startX, startY, IID_FLAME_THROWER_GOODIE)
+{
+	return;
+}
+
+void RestoreFlame::doSpecialDrops() {
+	Socrates* player = getWorld()->getPlayer();
+	getWorld()->increaseScore(300);
+	getWorld()->playSound(SOUND_GOT_GOODIE);
+	player->updateFlame(player->getFlame() + 5);
+}
+
+ /////////////////
+ //ExtraLife///
+ /////////////////
+ 
+ExtraLife::ExtraLife(StudentWorld* world, double startX, double startY) :
+	Drop(world, startX, startY, IID_EXTRA_LIFE_GOODIE)
+{
+	return;
+}
+
+void ExtraLife::doSpecialDrops() {
+		 getWorld()->increaseScore(500);
+		 getWorld()->playSound(SOUND_GOT_GOODIE);
+		 getWorld()->incLives();
+
+	 }
+
+////////////////////
+/////Fungus class /////
+///////////////////////
+
+Fungus::Fungus(StudentWorld* world, double startX, double startY) 
+	:Drop(world, startX, startY, IID_FUNGUS)
+{
+	return;
+}
+void Fungus::doSpecialDrops() {
+	Socrates* player = getWorld()->getPlayer();
+	getWorld()->increaseScore(-50);
+	player->updateHealth(player->getHealth() - 20);
+}
 
  ///////////////////////////////
  //Auxilliary 

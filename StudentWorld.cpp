@@ -149,7 +149,7 @@ int StudentWorld::getActorsCount() const {
 	return m_Actors.size();
 }
 
-Actor* StudentWorld::getPlayer() const {
+Socrates* StudentWorld::getPlayer() const {
 	return m_player;
 }
 
