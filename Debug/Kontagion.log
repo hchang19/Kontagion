@@ -1,5 +1,14 @@
-﻿  StudentWorld.cpp
-C:\Users\Clonix\source\repos\CS32\Kontagion\Kontagion\StudentWorld.cpp(51,22): warning C4018: '<': signed/unsigned mismatch
-C:\Users\Clonix\source\repos\CS32\Kontagion\Kontagion\StudentWorld.cpp(67,22): warning C4018: '<': signed/unsigned mismatch
-C:\Users\Clonix\source\repos\CS32\Kontagion\Kontagion\StudentWorld.cpp(92,20): warning C4018: '<': signed/unsigned mismatch
+﻿  Actor.cpp
+C:\Users\Clonix\source\repos\CS32\Kontagion\Kontagion\Actor.cpp(146,26): warning C4244: 'argument': conversion from 'double' to 'Direction', possible loss of data
+  StudentWorld.cpp
+C:\Users\Clonix\source\repos\CS32\Kontagion\Kontagion\StudentWorld.cpp(74,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Clonix\source\repos\CS32\Kontagion\Kontagion\StudentWorld.cpp(101,57): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+C:\Users\Clonix\source\repos\CS32\Kontagion\Kontagion\StudentWorld.cpp(102,57): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+C:\Users\Clonix\source\repos\CS32\Kontagion\Kontagion\StudentWorld.cpp(113,57): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+C:\Users\Clonix\source\repos\CS32\Kontagion\Kontagion\StudentWorld.cpp(114,57): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+C:\Users\Clonix\source\repos\CS32\Kontagion\Kontagion\StudentWorld.cpp(194,9): warning C4101: 'temp': unreferenced local variable
+C:\Users\Clonix\source\repos\CS32\Kontagion\Kontagion\StudentWorld.cpp(216,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Clonix\source\repos\CS32\Kontagion\Kontagion\StudentWorld.cpp(228,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Clonix\source\repos\CS32\Kontagion\Kontagion\StudentWorld.cpp(251,22): warning C4018: '<': signed/unsigned mismatch
+  Generating Code...
   Kontagion.vcxproj -> C:\Users\Clonix\source\repos\CS32\Kontagion\Debug\Kontagion.exe

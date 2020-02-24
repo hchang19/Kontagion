@@ -20,7 +20,7 @@ Actor::~Actor() {
 	return;
 }
 
-int Actor::getHealth() const{
+int Actor::getHealth() const {
 	return m_health;
 }
 
@@ -28,7 +28,7 @@ void Actor::updateHealth(int h) {
 	m_health = h;
 }
 
-bool Actor::isAlive() const{
+bool Actor::isAlive() const {
 	return (m_health > 0);
 }
 
@@ -41,15 +41,43 @@ bool Actor::canOverlap() const {
 	return false;
 }
 
-bool Actor::canHit() const{
+bool Actor::canHit() const {
 	return true;
 }
 
-bool Actor::canBlock() const{
+bool Actor::canBlock() const {
 	return false;
 }
 void Actor::doSomething() {
 	return;
+}
+
+bool Actor::isEdible() const {
+	return false;
+}
+
+bool Actor::isBacteria() const {
+	return false;
+}
+
+bool Actor::isSalmonella() const {
+	return false;
+}
+/////////////////////////
+/////class Edible//////
+//////////////////////
+
+Edible::Edible(StudentWorld* world, double startX, double startY)
+	:Actor(world, IID_FOOD, startX, startY, 90, 1)
+{
+	return;
+}
+bool Edible::isEdible() const {
+	return true;
+}
+
+bool Edible::canHit() const {
+	return false;
 }
 
 //////////////////////////////////
@@ -72,7 +100,7 @@ int Socrates::getFlame() const {
 	return m_nFlame;
 }
 
-int Socrates::getSpray() const{
+int Socrates::getSpray() const {
 	return m_nSpray;
 }
 
@@ -85,7 +113,7 @@ void Socrates::doSomething() {
 	if (getWorld()->getKey(keyPressed)) {
 		const double PI = 4 * atan(1);
 		double newX, newY;
-		addSpray = false;
+
 		switch (keyPressed) {
 		case KEY_PRESS_LEFT:
 			pos_angle -= 5;
@@ -94,6 +122,7 @@ void Socrates::doSomething() {
 			pos_angle += 5;
 			break;
 		case KEY_PRESS_SPACE:
+			addSpray = false; //to avoid spamming
 			if (m_nSpray > 0) {
 				getWorld()->fireSpray();
 				getWorld()->playSound(SOUND_PLAYER_SPRAY);
@@ -110,6 +139,7 @@ void Socrates::doSomething() {
 		default:
 			return;
 		}
+
 		newX = VIEW_RADIUS * cos(pos_angle * 1.0 / 180 * PI) + VIEW_WIDTH / 2;
 		newY = VIEW_RADIUS * sin(pos_angle * 1.0 / 180 * PI) + VIEW_HEIGHT / 2;
 		moveTo(newX, newY);
@@ -119,11 +149,10 @@ void Socrates::doSomething() {
 		if (!addSpray) {
 			addSpray = true;
 		}
-		else if(m_nSpray < 20){
+		else if (m_nSpray < 20 && addSpray) {
 			m_nSpray++;
 		}
 	}
-		
 
 	//check for sprays
 	//TODO
@@ -143,7 +172,7 @@ bool Dirt::canOverlap() const {
 	return true;
 }
 
-bool Dirt::canBlock() const{
+bool Dirt::canBlock() const {
 	return true;
 }
 
@@ -156,16 +185,76 @@ void Dirt::doSomething() {
 //////////////////////////
 
 Food::Food(StudentWorld* world, double startX, double startY)
-	:Actor(world, IID_FOOD, startX, startY, 90, 1)
+	:Edible(world, startX, startY)
 {
 	return;
 }
 
-bool Food::canHit() const {
+void Food::doSomething() {
+	return;
+}
+
+////////////////////////
+/////Implementation of Pit
+/////////////////////////////
+Pit::Pit(StudentWorld* world, double startX, double startY)
+	:Actor(world, IID_PIT, startX, startY, 0, 1, 1)
+{
+	m_nRegSalmon = 5;
+	m_nAgroSalmon = 3;
+	m_nEColi = 2;
+	m_nTotal = 10;
+
+	m_valids.push_back("RegSalmon"); // 0 
+	m_valids.push_back("AgroSalmon"); // 1
+	m_valids.push_back("EColi"); //2
+}
+
+bool Pit::canHit() const {
 	return false;
 }
 
-void Food::doSomething() {
+void Pit::doSomething() {
+	//TODO GOD HELP ME
+	if (m_nTotal <= 0) {
+		updateHealth(getHealth() - 1);
+		return;
+	}
+
+	//int spawnChance = randInt(1, 50);
+	//if (spawnChance == 1) {
+	//	int pickSpawn = randInt(0, m_valids.size() - 1);
+	//	///Choose to use a vector to retain how much 
+	//	if (m_valids[pickSpawn] == "EColi") {
+	//		//Spawn Ecoli
+	//		getWorld()->spawnBacteria(getX(), getY(), SPAWN_CODE_ECOLI);
+	//		m_nEColi--;
+	//		if (m_nEColi == 0) {
+	//			m_valids.erase(m_valids.begin() + pickSpawn);
+	//		}
+	//		return;
+	//	}
+	//	else if (m_valids[pickSpawn] == "AgroSalmon") {
+	//		//Spawn Aggresive Salmonella
+	//		getWorld()->spawnBacteria(getX(), getY(), SPAWN_CODE_AGRSALMON);
+	//		m_nAgroSalmon--;
+	//		if (m_nAgroSalmon == 0) {
+	//			m_valids.erase(m_valids.begin() + pickSpawn);
+	//		}
+	//		return;
+	//	}
+	//	else if (m_valids[pickSpawn] == "RegSalmon") {
+	//		//Spawn Regular Salmonella
+	//		getWorld()->spawnBacteria(getX(), getY(), SPAWN_CODE_REGSALMON);
+	//		m_nRegSalmon--;
+	//		if (m_nRegSalmon == 0) {
+	//			m_valids.erase(m_valids.begin() + pickSpawn);
+	//		}
+	//		return;
+	//	}
+
+	//}
+
 	return;
 }
 
@@ -173,7 +262,7 @@ void Food::doSomething() {
 ///Implementation of Ammo //parent of flame and spray
 ////////////////////////////////
 Ammo::Ammo(StudentWorld* world, double startX, double startY, int dir, double MaxDistance, int ImageID, int damage)
-:Actor(world, ImageID, startX, startY, dir, 1,1){
+	:Actor(world, ImageID, startX, startY, dir, 1, 1) {
 	m_distance = 0;
 	m_initX = startX;
 	m_damage = damage;
@@ -181,163 +270,200 @@ Ammo::Ammo(StudentWorld* world, double startX, double startY, int dir, double Ma
 	MAX_DISTANCE = MaxDistance;
 }
 
- bool Ammo::canHit() const {
-	 return false;
+bool Ammo::canHit() const {
+	return false;
 }
 
- void Ammo::doSomething() {
-	 if (!isAlive()) {
-		 return;
-	 }
-	 m_distance = calculateDistance(m_initX, m_initY, getX(), getY());
-	 //check if it flied for too long
-	 if (m_distance >= MAX_DISTANCE) {
-		 updateHealth(getHealth() - 1);
-		 return;
-	 }
-
-	 //loop through actors and detect if it ran into anything that can be hit
-	 Actor* temp; 
-	 for (int i = 0; i < getWorld()->getActorsCount(); i++) {
-		 temp = getWorld()->getActors()[i];
-		 if (temp->canHit()) {
-			 if (calculateDistance(getX(), getY(), temp->getX(), temp->getY()) <= SPRITE_WIDTH)
-			 {
-				 temp->updateHealth(temp->getHealth() - m_damage);
-				 updateHealth(getHealth() - 1);
-				 return;
-			 }
-		 }
-	 }
-
-	 moveAngle(getDirection(), SPRITE_WIDTH); 
-
- }
-
- ///////////////////////////
- ///Flame class - spec pg . 29
- ///////////////////////////////
-
- Flame::Flame(StudentWorld* world, double startX, double startY, int dir)
-	 :Ammo(world, startX, startY, dir, 32, IID_FLAME, 5)
- {
-	 return;
- }
- ////////////////////////////////
-//Spray Class -spec pg .30
- //////////////////////////////
- Spray::Spray(StudentWorld* world, double startX, double startY, int dir) 
- 
-	 :Ammo(world, startX, startY, dir, 112, IID_SPRAY, 2)
- {
-	 return;
- }
-
- ///////////////////////
-//DROP CLASS - spec pg.33
- /////////////////////////
- Drop::Drop(StudentWorld* world, double startX, double startY, int ImageID)
-	:Actor(world, ImageID, startX, startY, 0, 1, 1)
- {
-	 m_time = 0;
-	 m_maxTime = max(randInt(0, 300 - (10 * getWorld()->getLevel()) - 1), 50);
- }
-
- void Drop::doSomething() {
-	 if (!isAlive()) {
-		 return;
-	 }
-
-	 
-
-	 Actor* temp_player = getWorld()->getPlayer();
-	 if (calculateDistance(getX(), getY(), temp_player->getX(), temp_player->getY())<= SPRITE_WIDTH) {
-		 doSpecialDrops();
-		 updateHealth(getHealth() - 1);
-		 return;
-	 }
-
-	 if (m_time > m_maxTime) {
-		 updateHealth(getHealth() - 1);
-		 return;
-	 }
-
-
-	 m_time++;
- }
-
- ////////////////
- //Restore Health////
- ////////////////
-
- 
-RestoreHealth::RestoreHealth(StudentWorld* world, double startX, double startY) :
-		Drop(world,startX,startY,IID_RESTORE_HEALTH_GOODIE)
-	{
+void Ammo::doSomething() {
+	if (!isAlive()) {
 		return;
 	}
- 
-void RestoreHealth::doSpecialDrops() {
+	m_distance = calculateDistance(m_initX, m_initY, getX(), getY());
+	//check if it flied for too long
+	if (m_distance >= MAX_DISTANCE) {
+		updateHealth(getHealth() - 1);
+		return;
+	}
+
+	//calls a StudentWorld function to check if it hits something
+	if (getWorld()->ammoHit(getX(), getY(), m_damage)) {
+		updateHealth(getHealth() - 1);
+		return;
+	}
+
+	moveAngle(getDirection(), SPRITE_WIDTH);
+}
+
+///////////////////////////
+///Flame class - spec pg . 29
+///////////////////////////////
+
+Flame::Flame(StudentWorld* world, double startX, double startY, int dir)
+	:Ammo(world, startX, startY, dir, 32, IID_FLAME, 5)
+{
+	return;
+}
+////////////////////////////////
+//Spray Class -spec pg .30
+ //////////////////////////////
+Spray::Spray(StudentWorld* world, double startX, double startY, int dir)
+
+	:Ammo(world, startX, startY, dir, 112, IID_SPRAY, 2)
+{
+	return;
+}
+
+///////////////////////
+//DROP CLASS - spec pg.33
+ /////////////////////////
+Drop::Drop(StudentWorld* world, double startX, double startY, int ImageID)
+	:Actor(world, ImageID, startX, startY, 0, 1, 1)
+{
+	m_time = 0;
+	m_maxTime = max(randInt(0, 300 - (10 * getWorld()->getLevel()) - 1), 50); //unclear specs, will specify
+}
+
+void Drop::doSomething() {
+	if (!isAlive()) {
+		return;
+	}
+
+	Actor* temp_player = getWorld()->getPlayer();
+	if (calculateDistance(getX(), getY(), temp_player->getX(), temp_player->getY()) <= SPRITE_WIDTH) {
+		doSpecialDrops();
+		updateHealth(getHealth() - 1);
+		return;
+	}
+
+	if (m_time > m_maxTime) {
+		updateHealth(getHealth() - 1);
+		return;
+	}
+
+	m_time++;
+}
+
+////////////////
+//HealthGoodie////
+////////////////
+
+HealthGoodie::HealthGoodie(StudentWorld* world, double startX, double startY) :
+	Drop(world, startX, startY, IID_RESTORE_HEALTH_GOODIE)
+{
+	return;
+}
+
+void HealthGoodie::doSpecialDrops() {
 	getWorld()->increaseScore(250);
 	getWorld()->playSound(SOUND_GOT_GOODIE);
 	getWorld()->getPlayer()->updateHealth(100);
-
 }
 
+//////////////////////
+/////Flame Goodie/////////
+////////////////////
 
- //////////////////////
- //Restore Flame/////////
- ////////////////////
- 
-RestoreFlame::RestoreFlame(StudentWorld* world, double startX, double startY) :
+FlameGoodie::FlameGoodie(StudentWorld* world, double startX, double startY) :
 	Drop(world, startX, startY, IID_FLAME_THROWER_GOODIE)
 {
 	return;
 }
 
-void RestoreFlame::doSpecialDrops() {
+void FlameGoodie::doSpecialDrops() {
 	Socrates* player = getWorld()->getPlayer();
 	getWorld()->increaseScore(300);
 	getWorld()->playSound(SOUND_GOT_GOODIE);
 	player->updateFlame(player->getFlame() + 5);
 }
 
+/////////////////
+/////Life Goodie///
  /////////////////
- //ExtraLife///
- /////////////////
- 
-ExtraLife::ExtraLife(StudentWorld* world, double startX, double startY) :
+
+LifeGoodie::LifeGoodie(StudentWorld* world, double startX, double startY) :
 	Drop(world, startX, startY, IID_EXTRA_LIFE_GOODIE)
 {
 	return;
 }
 
-void ExtraLife::doSpecialDrops() {
-		 getWorld()->increaseScore(500);
-		 getWorld()->playSound(SOUND_GOT_GOODIE);
-		 getWorld()->incLives();
-
-	 }
+void LifeGoodie::doSpecialDrops() {
+	getWorld()->increaseScore(500);
+	getWorld()->playSound(SOUND_GOT_GOODIE);
+	getWorld()->incLives();
+}
 
 ////////////////////
 /////Fungus class /////
 ///////////////////////
 
-Fungus::Fungus(StudentWorld* world, double startX, double startY) 
+Fungus::Fungus(StudentWorld* world, double startX, double startY)
 	:Drop(world, startX, startY, IID_FUNGUS)
 {
 	return;
 }
 void Fungus::doSpecialDrops() {
-	Socrates* player = getWorld()->getPlayer();
+	Socrates* temp_player = getWorld()->getPlayer();
+
 	getWorld()->increaseScore(-50);
-	player->updateHealth(player->getHealth() - 20);
+	temp_player->updateHealth(temp_player->getHealth() - 20);
 }
 
- ///////////////////////////////
- //Auxilliary 
- ///////////////////////////////
- double calculateDistance(double startX, double startY, double finalX, double finalY) {
-	 double distance = sqrt(pow(finalX - startX, 2) + pow(finalY - startY, 2));
-	 return ceil(distance);
- }
+///////////////////
+/////Bacteria class////////
+//////////////////////
+
+Bacteria::Bacteria(StudentWorld* world, double startX, double startY, int imageID, int health, int damage)
+	:Actor(world, imageID, startX, startY, 90, 0, health)
+{
+	m_nFood = 0;
+	m_distancePlan = 0;
+	m_damage = damage;
+}
+bool Bacteria::isBacteria() const {
+	return true;
+}
+
+void Bacteria::doSomething() {
+	if (!isAlive()) {
+		return;
+	}
+
+	doSpecialBacteria();
+	Socrates* temp_player = getWorld()->getPlayer();
+	if (calculateDistance(getX(), getY(), temp_player->getX(), temp_player->getY()) <= SPRITE_WIDTH) {
+		temp_player->updateHealth(temp_player->getHealth() - m_damage);
+
+		return;
+	}
+
+	// check whether or not to spawn another food
+	if (m_nFood == 3) {
+		double xPos, yPos;
+		//calculate new x pos
+		xPos = getX();
+		if (xPos < VIEW_WIDTH / 2) {
+			xPos += SPRITE_WIDTH / 2;
+		}
+		else if (xPos > VIEW_WIDTH / 2) {
+			xPos -= SPRITE_WIDTH / 2;
+		}
+		//calculate new y pos
+		yPos = getY();
+		if (yPos < VIEW_HEIGHT / 2) {
+			yPos += SPRITE_WIDTH / 2;
+		}
+		else if (yPos > VIEW_HEIGHT / 2) {
+			yPos -= SPRITE_WIDTH / 2;
+		}
+		//call copyfunction
+		createSpecialClone(xPos, yPos);
+		m_nFood = 0;
+	}
+
+	//check for food
+
+	if (getWorld()->overlapFood(getX(), getY())) {
+		m_nFood++;
+	}
+	//wants to continue moving in same direction
+}

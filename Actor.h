@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <algorithm>
 #include <math.h>
+
 //base class for all actors
 class Actor :public GraphObject {
 public:
@@ -20,6 +21,9 @@ public:
 	virtual bool canOverlap() const; //default false
 	virtual bool canHit() const; //default true
 	virtual bool canBlock()const; //default false
+	virtual bool isEdible() const; //default false
+	virtual bool isBacteria() const; //default false;
+	virtual bool isSalmonella() const; //default false
 	int getHealth() const;
 	void updateHealth(int h);
 
@@ -28,6 +32,12 @@ private:
 	int m_health;
 };
 
+class Edible : public Actor {
+public:
+	Edible(StudentWorld* world, double startX, double startY);
+	virtual bool isEdible() const;
+	virtual bool canHit() const;
+};
 //Socrates class - aka the Player - spec p.25
 
 class Socrates :public Actor {
@@ -56,14 +66,12 @@ public:
 	virtual bool canBlock() const;
 };
 //Food class - can be eaten by Bacteria - spec pg. 28
-class Food : public Actor {
+class Food : public Edible {
 public:
 	Food(StudentWorld* world, double startxX, double startY);
 	virtual void doSomething();
-	virtual bool canHit() const;
 private:
 };
-
 
 class Ammo : public Actor {
 public:
@@ -75,7 +83,6 @@ private:
 	double MAX_DISTANCE;
 	int m_damage;
 	double m_initX, m_initY;
-
 };
 //Flame class - everything is lit - spec p. 29
 
@@ -100,18 +107,15 @@ private:
 	virtual void doSpecialDrops() = 0;
 	int m_time;
 	int m_maxTime;
-
-
 };
 
 ///////////////////////
 //Restore Health////////
 //////////////////
 
-class RestoreHealth : public Drop {
-
+class HealthGoodie : public Drop {
 public:
-	RestoreHealth(StudentWorld* world, double startX, double startY);
+	HealthGoodie(StudentWorld* world, double startX, double startY);
 private:
 	virtual  void doSpecialDrops();
 };
@@ -119,10 +123,9 @@ private:
 ///////////////////////
 ///Restore Flame
 //////////////////////
-class RestoreFlame : public Drop {
-
+class FlameGoodie : public Drop {
 public:
-	RestoreFlame(StudentWorld* world, double startX, double startY);
+	FlameGoodie(StudentWorld* world, double startX, double startY);
 private:
 	virtual  void doSpecialDrops();
 };
@@ -131,9 +134,9 @@ private:
 ////Extralife
 ///////////////////
 
-class ExtraLife :public Drop {
+class LifeGoodie :public Drop {
 public:
-	ExtraLife(StudentWorld* world, double startX, double startY);
+	LifeGoodie(StudentWorld* world, double startX, double startY);
 private:
 	virtual void doSpecialDrops();
 };
@@ -145,6 +148,37 @@ public:
 private:
 	virtual void doSpecialDrops();
 };
-//Auxilliary Functions
-double calculateDistance(double startX, double startY, double finalX, double finalY) ;
+
+/////////////////////
+////Pit class//////////
+////////////////////
+
+class Pit :public Actor {
+public:
+	Pit(StudentWorld* world, double startX, double startY);
+	virtual bool canHit() const;
+	virtual void doSomething();
+private:
+	int m_nRegSalmon;
+	int m_nAgroSalmon;
+	int m_nEColi;
+	int m_nTotal;
+	std::vector<std::string> m_valids;
+};
+///////////////////////////
+/////Bacteria Class////////
+///////////////////////////
+class Bacteria :public Actor {
+public:
+	Bacteria(StudentWorld* world, double startX, double startY, int imageID, int health, int damage);
+	virtual void doSomething();
+	virtual bool isBacteria() const;
+private:
+	double m_distancePlan;
+	int m_nFood;
+	int m_damage;
+	virtual void doSpecialBacteria() = 0;
+	virtual void createSpecialClone(double startX, double startY) = 0;
+};
+
 #endif // ACTOR_H_

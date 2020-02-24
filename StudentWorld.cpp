@@ -6,6 +6,8 @@
 #include <cmath>
 #include <algorithm>
 #include <stdlib.h>
+#include <sstream>
+#include <iomanip>
 using namespace std;
 
 GameWorld* createStudentWorld(string assetPath)
@@ -23,59 +25,31 @@ StudentWorld::StudentWorld(string assetPath)
 }
 
 StudentWorld::~StudentWorld() {
-	delete m_player;
-	vector<Actor*>::iterator it;
-	for (it = m_Actors.begin(); it != m_Actors.end();) {
-		it = m_Actors.erase(it);
-	}
+	cleanUp();
 }
 
 int StudentWorld::init()
 {
 	const int CURRENT_LEVEL = getLevel();
-	const int MAX_DISTANCE = 120;
 	m_player = new Socrates(this);
 	m_nBacteria = 0;
-
+	
 	//calculate amount of pit, food and dirt
 	int dirt_count = max(180 - 20 * CURRENT_LEVEL, 20);
 	int food_count = min(5 * CURRENT_LEVEL, 25);
-	double x_pos, y_pos;
+	int pit_count = getLevel();
+
+
+	
 	//LOAD PITS - check no pits collide
+	createTerrain(pit_count, SPAWN_CODE_PIT);
+
 	//LOAD FOOD - check no food collide
 
-	for (int i = 0; i < food_count;) {
-		x_pos = randInt(0, VIEW_WIDTH);
-		y_pos = randInt(0, VIEW_HEIGHT);
-		if (calculateDistance(x_pos, y_pos, VIEW_WIDTH / 2, VIEW_HEIGHT / 2) <= MAX_DISTANCE) {
-			for (int i = 0; i < m_Actors.size(); i++) {
-					if (calculateDistance(x_pos, y_pos, m_Actors[i]->getX(), m_Actors[i]->getY() <= SPRITE_WIDTH)) {
-						continue;
-					}
-			}
-			Actor* temp = new Food(this, x_pos, y_pos);
-			m_Actors.push_back(temp);
-			i++;
-		}
-	}
+	createTerrain(food_count, SPAWN_CODE_FOOD);
 
-	//LOAD DIRT
-	for (int i = 0; i < dirt_count;) {
-		x_pos = randInt(0, VIEW_WIDTH);
-		y_pos = randInt(0, VIEW_HEIGHT);
-		if (calculateDistance(x_pos, y_pos, VIEW_WIDTH / 2, VIEW_HEIGHT / 2) <= MAX_DISTANCE) {
-			for (int i = 0; i < m_Actors.size(); i++) {
-				if (!m_Actors[i]->canOverlap()) {
-					if (calculateDistance(x_pos, y_pos, m_Actors[i]->getX(), m_Actors[i]->getY() <= SPRITE_WIDTH)) {
-						continue;
-					}
-				}
-			}
-			Actor* temp = new Dirt(this, x_pos, y_pos);
-			m_Actors.push_back(temp);
-			i++;
-		}
-	}
+	//LOAD DIRT - can overlap dirt
+	createTerrain(dirt_count, SPAWN_CODE_DIRT);
 
 
 	/////TESTING NEW CLASSES
@@ -84,19 +58,26 @@ int StudentWorld::init()
 
 int StudentWorld::move()
 {
+	const double PI = 4 * atan(1);
 	// This code is here merely to allow the game to build, run, and terminate after you hit enter.
 	// Notice that the return value GWSTATUS_PLAYER_DIED will cause our framework to end the current level.
 
-	m_player->doSomething();
 
-	for (int i = 0; i < m_Actors.size(); i++) {
-		m_Actors[i]->doSomething();
-		if (!m_player->isAlive()) {
-			decLives();
-			return GWSTATUS_PLAYER_DIED;
-		}
+
+	if (!m_player->isAlive()) {
+		decLives();
+		return GWSTATUS_PLAYER_DIED;
 	}
 
+	//each object do Something
+	m_player->doSomething();
+	for (int i = 0; i < m_Actors.size(); i++) {
+		if (m_Actors[i]->isAlive()) {
+			m_Actors[i]->doSomething();
+		}
+		
+	}
+	//cleanup dead actors
 	vector<Actor*>::iterator it;
 	for (it = m_Actors.begin(); it != m_Actors.end();) {
 		if (!(*it)->isAlive()) {
@@ -107,6 +88,70 @@ int StudentWorld::move()
 			it++;
 		}
 	}
+	//Add new goodies
+
+	int chanceFungus, chanceGoodie, spawnFungus, spawnGoodie, pos_angle, x_pos, y_pos;
+	chanceFungus = max(510 - getLevel() * 10, 200);
+	chanceGoodie = max(510 - getLevel() * 10, 250);
+	//calculate chance for fungus spawn
+
+	spawnFungus = randInt(0, chanceFungus - 1);
+	if (spawnFungus == 0) {
+		pos_angle = randInt(0, 360);
+		x_pos = VIEW_RADIUS * cos(pos_angle * 1.0 / 180 * PI) + VIEW_WIDTH / 2;
+		y_pos = VIEW_RADIUS * sin(pos_angle * 1.0 / 180 * PI) + VIEW_HEIGHT / 2;
+		Actor* temp = new Fungus(this, x_pos, y_pos);
+		m_Actors.push_back(temp);
+	}
+
+	//calculate goodie spawn 
+	spawnGoodie = randInt(0, chanceGoodie - 1);
+	if (spawnGoodie == 0) {
+		int determine = randInt(1, 100);
+		Actor* temp;
+		pos_angle = randInt(0, 360);
+		x_pos = VIEW_RADIUS * cos(pos_angle * 1.0 / 180 * PI) + VIEW_WIDTH / 2;
+		y_pos = VIEW_RADIUS * sin(pos_angle * 1.0 / 180 * PI) + VIEW_HEIGHT / 2;
+		//spawns healthGoodie
+		if (determine <= 60) {
+			temp = new HealthGoodie(this, x_pos, y_pos);
+		}
+		//spawns flameGoodie
+		else if (determine <= 90) {
+			temp = new FlameGoodie(this, x_pos, y_pos);
+
+		}
+		//spawn LifeGoodie
+		else {
+			temp = new LifeGoodie(this, x_pos, y_pos);
+		}
+		m_Actors.push_back(temp);
+	}
+
+	//Set the status bar text
+
+	//ensure the minimum score is 0 
+	if (getScore() < 50) {
+		increaseScore(-getScore());
+	}
+
+	ostringstream oss;
+
+	oss << "Score: ";
+	oss.fill('0');
+	oss << setw(6) << getScore() << "  ";
+	
+	oss.fill(' ');
+	oss << "Level: " << setw(2) << getLevel() << "  ";
+
+	oss << "Lives: " << setw(2) << getLives() << "  ";
+
+	oss << "Health: " <<setw(3) << m_player->getHealth() << "  ";
+
+	oss << "Sprays: " << m_player->getSpray() << "  ";
+
+	oss << "Flames: " << setw(2) << m_player->getFlame() << "  ";
+	setGameStatText(oss.str());
 
 
 
@@ -118,6 +163,7 @@ void StudentWorld::cleanUp()
 	delete m_player;
 	vector<Actor*>::iterator it;
 	for (it = m_Actors.begin(); it != m_Actors.end();) {
+		delete* it;
 		it = m_Actors.erase(it);
 	}
 }
@@ -131,7 +177,7 @@ void StudentWorld::fireSpray() {
 	m_Actors.push_back(temp);
 }
 
-//Spawn Flame class when Socrates call for it - DEBUG
+//Spawn Flame class when Socrates call for it
 void StudentWorld::fireFlame() {
 	double x_pos, y_pos;
 	int temp_dir = m_player->getDirection();
@@ -143,16 +189,96 @@ void StudentWorld::fireFlame() {
 	}
 }
 
+//Spawn Bacteria
+void StudentWorld::spawnBacteria(double xPos, double yPos, int spawnCode) {
+	Actor* temp;
+	
+	switch (spawnCode) {
+	case SPAWN_CODE_REGSALMON:
+		break;
+	case SPAWN_CODE_AGRSALMON:
+		break;
+	case SPAWN_CODE_ECOLI:
+		break;
+	default:
+		return;
+	}
+	playSound(SOUND_BACTERIUM_BORN);
+	m_nBacteria++;
+}
 
-int StudentWorld::getActorsCount() const {
 
-	return m_Actors.size();
+
+
+//Spawn Bacteria when the pit determines it
+bool StudentWorld:: ammoHit(double xPos, double yPos, int damage) {
+
+	for (int i = 0; i < m_Actors.size(); i++) {
+		if(m_Actors[i]->canHit()) {
+			if (calculateDistance(xPos, yPos, m_Actors[i]->getX(), m_Actors[i]->getY()) <= SPRITE_WIDTH) {
+				m_Actors[i]->updateHealth(m_Actors[i]->getHealth() - damage);
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+bool StudentWorld::overlapFood(double xPos, double yPos) {
+	for (int i = 0; i < m_Actors.size(); i++) {
+		if (m_Actors[i]->isEdible()) {
+			if (calculateDistance(xPos, yPos, m_Actors[i]->getX(), m_Actors[i]->getY()) <= SPRITE_WIDTH) {
+				m_Actors[i]->updateHealth(m_Actors[i]->getHealth() - 1);
+				return true;
+			}
+		}
+	}
+	return false;
 }
 
 Socrates* StudentWorld::getPlayer() const {
 	return m_player;
 }
 
-vector<Actor*> StudentWorld::getActors() const{
-	return m_Actors;
+void StudentWorld::createTerrain(int count, int spawnCode) {
+	double x_pos, y_pos;
+	const int MAX_DISTANCE = 120;
+
+	for (int i = 0; i < count;) {
+		x_pos = randInt(0, VIEW_WIDTH);
+		y_pos = randInt(0, VIEW_HEIGHT);
+		if (calculateDistance(x_pos, y_pos, VIEW_WIDTH / 2, VIEW_HEIGHT / 2) <= MAX_DISTANCE) {
+			for (int i = 0; i < m_Actors.size(); i++) {
+				if (!m_Actors[i]->canOverlap()) {
+					if (calculateDistance(x_pos, y_pos, m_Actors[i]->getX(), m_Actors[i]->getY() <= SPRITE_WIDTH)) {
+						continue;
+					}
+				}
+			}
+			Actor* temp;
+			switch (spawnCode) {
+			case SPAWN_CODE_DIRT:
+				temp = new Dirt(this, x_pos, y_pos);
+				break;
+			case SPAWN_CODE_FOOD:
+				temp = new Food(this, x_pos, y_pos);
+				break;
+			case SPAWN_CODE_PIT:
+				temp = new Pit(this, x_pos, y_pos);
+				break;
+			default:
+				return;
+			}
+			 
+			m_Actors.push_back(temp);
+			i++;
+		}
+	}
+}
+///////////////////////////////
+ //Auxilliary 
+ ///////////////////////////////
+double calculateDistance(double startX, double startY, double finalX, double finalY) {
+	double distance = sqrt(pow(finalX - startX, 2) + pow(finalY - startY, 2));
+	return ceil(distance);
 }
