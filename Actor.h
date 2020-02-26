@@ -7,23 +7,31 @@
 #include <stdlib.h>
 #include <algorithm>
 #include <math.h>
-
+//
+const double PI = 4 * atan(1);
 //base class for all actors
 class Actor :public GraphObject {
 public:
 	Actor(StudentWorld* world, int imageID, double startX, double startY, int dir = 0, int depth = 0, int health = 1);
 	virtual ~Actor();
 
-	bool isAlive() const; //return tr   ue if alive
+	bool isAlive() const; //return true if alive
 	StudentWorld* getWorld(); //pointer to the student world
 
 	virtual void doSomething() = 0;
+
+	//for purpose of class
 	virtual bool canOverlap() const; //default false
 	virtual bool canHit() const; //default true
 	virtual bool canBlock()const; //default false
+
+	//for Grouping of class
 	virtual bool isEdible() const; //default false
 	virtual bool isBacteria() const; //default false;
 	virtual bool isSalmonella() const; //default false
+	virtual bool isEColi() const; 
+	virtual bool isLevelObjective() const;
+	//Health functions
 	int getHealth() const;
 	void updateHealth(int h);
 
@@ -32,14 +40,7 @@ private:
 	int m_health;
 };
 
-class Edible : public Actor {
-public:
-	Edible(StudentWorld* world, double startX, double startY);
-	virtual bool isEdible() const;
-	virtual bool canHit() const;
-};
 //Socrates class - aka the Player - spec p.25
-
 class Socrates :public Actor {
 public:
 	Socrates(StudentWorld* world);
@@ -57,6 +58,7 @@ private:
 	bool addSpray;
 };
 
+
 //Dirt class - does nothing each tick - spec p.27
 class Dirt : public Actor {
 public:
@@ -65,6 +67,33 @@ public:
 	virtual bool canOverlap() const;
 	virtual bool canBlock() const;
 };
+
+/////////////////////
+////Pit class - spawns Bacterias
+////////////////////
+
+class Pit :public Actor {
+public:
+	Pit(StudentWorld* world, double startX, double startY);
+	virtual bool canHit() const;
+	virtual void doSomething();
+	virtual bool isLevelObjective() const;
+private:
+
+	int m_nTotal;
+	int m_nRegSalmon;
+	int m_nAgrSalmon;
+	int m_nEColi;
+};
+
+//Base class for powerups of Bacteria (currently only contains food)
+class Edible : public Actor {
+public:
+	Edible(StudentWorld* world, double startX, double startY);
+	virtual bool isEdible() const;
+	virtual bool canHit() const;
+};
+
 //Food class - can be eaten by Bacteria - spec pg. 28
 class Food : public Edible {
 public:
@@ -73,6 +102,7 @@ public:
 private:
 };
 
+//base class for all projectiles used by Socrates
 class Ammo : public Actor {
 public:
 	Ammo(StudentWorld* world, double startX, double startY, int dir, double MaxDistance, int ImageID, int damage);
@@ -84,8 +114,8 @@ private:
 	int m_damage;
 	double m_initX, m_initY;
 };
-//Flame class - everything is lit - spec p. 29
 
+//Flame class - everything is lit - spec p. 29
 class Flame : public Ammo {
 public:
 	Flame(StudentWorld* world, double startX, double startY, int dir);
@@ -98,7 +128,6 @@ public:
 };
 
 //Drops -  base class for goodies and fungus - spec pg. 33
-
 class Drop : public Actor {
 public:
 	Drop(StudentWorld* world, double startX, double startY, int ImageID);
@@ -149,36 +178,76 @@ private:
 	virtual void doSpecialDrops();
 };
 
-/////////////////////
-////Pit class//////////
-////////////////////
 
-class Pit :public Actor {
-public:
-	Pit(StudentWorld* world, double startX, double startY);
-	virtual bool canHit() const;
-	virtual void doSomething();
-private:
-	int m_nRegSalmon;
-	int m_nAgroSalmon;
-	int m_nEColi;
-	int m_nTotal;
-	std::vector<std::string> m_valids;
-};
 ///////////////////////////
-/////Bacteria Class////////
+/////Bacteria Class - Base class for all Bacterias aka Enemeis of Socrates
 ///////////////////////////
 class Bacteria :public Actor {
 public:
 	Bacteria(StudentWorld* world, double startX, double startY, int imageID, int health, int damage);
+	~Bacteria();
 	virtual void doSomething();
 	virtual bool isBacteria() const;
+	virtual bool isLevelObjective() const;
 private:
-	double m_distancePlan;
+
+	
 	int m_nFood;
 	int m_damage;
 	virtual void doSpecialBacteria() = 0;
 	virtual void createSpecialClone(double startX, double startY) = 0;
 };
 
+//////////////////////////
+/////Salmonella class - base class for speicialized Salmonella class
+//////////////////////////
+class Salmonella :public Bacteria {
+public:
+	Salmonella(StudentWorld* world, double startX, double startY, int health, int damage);
+	virtual bool isSalmonella() const;
+private:
+	double m_distancePlan;
+	virtual void doSpecialBacteria();
+	virtual bool doSpecialSalmonella() = 0; //return false to do nothing
+};
+
+class RegularSalmonella :public Salmonella {
+public:
+	RegularSalmonella(StudentWorld* world, double startX, double startY);
+private:
+	virtual void createSpecialClone(double startX, double startY);
+	virtual bool doSpecialSalmonella();
+
+};
+
+class AggresiveSalmonella :public Salmonella {
+public:
+	AggresiveSalmonella(StudentWorld* world, double startX, double startY);
+private:
+	virtual void createSpecialClone(double startX, double startY);
+	virtual bool doSpecialSalmonella();
+};
+
+/////////////////////
+/////ECOLI CLASS///////
+///////////////////////
+
+class EColi :public Bacteria {
+public:
+	EColi(StudentWorld* world, double startX, double startY, int health, int damage);
+	virtual bool isEColi() const;
+private:
+	virtual void doSpecialBacteria();
+	virtual bool doSpecialEColi() = 0; //return false to do nothing
+	
+};
+
+class RegularEColi:public EColi {
+public:
+	RegularEColi(StudentWorld* world, double startX, double startY);
+private:
+	virtual void createSpecialClone(double startX, double startY);
+	virtual bool doSpecialEColi();
+
+};
 #endif // ACTOR_H_

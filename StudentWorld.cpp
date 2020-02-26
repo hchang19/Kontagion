@@ -10,6 +10,21 @@
 #include <iomanip>
 using namespace std;
 
+///////////////////////////////
+
+
+
+
+
+///////////THE DAMAGE FOR EACH BACTERIA IS SET TO 0 FOR TESTING PURPOSE CHANGE BACK BEFORE YOU SUBMIT 
+////////////REMEMBER DUMBASS
+
+
+
+
+
+
+///////////////////////////
 GameWorld* createStudentWorld(string assetPath)
 {
 	return new StudentWorld(assetPath);
@@ -40,17 +55,14 @@ int StudentWorld::init()
 	int pit_count = getLevel();
 
 
-	
 	//LOAD PITS - check no pits collide
 	createTerrain(pit_count, SPAWN_CODE_PIT);
-
 	//LOAD FOOD - check no food collide
 
-	createTerrain(food_count, SPAWN_CODE_FOOD);
-
+	//createTerrain(food_count, SPAWN_CODE_FOOD);
 	//LOAD DIRT - can overlap dirt
-	createTerrain(dirt_count, SPAWN_CODE_DIRT);
 
+	createTerrain(dirt_count, SPAWN_CODE_DIRT);
 
 	/////TESTING NEW CLASSES
 	return GWSTATUS_CONTINUE_GAME;
@@ -63,20 +75,26 @@ int StudentWorld::move()
 	// Notice that the return value GWSTATUS_PLAYER_DIED will cause our framework to end the current level.
 
 
-
-	if (!m_player->isAlive()) {
-		decLives();
-		return GWSTATUS_PLAYER_DIED;
-	}
-
 	//each object do Something
 	m_player->doSomething();
 	for (int i = 0; i < m_Actors.size(); i++) {
 		if (m_Actors[i]->isAlive()) {
 			m_Actors[i]->doSomething();
 		}
-		
 	}
+
+	if (!m_player->isAlive()) {
+		decLives();
+		playSound(SOUND_PLAYER_DIE);
+		return GWSTATUS_PLAYER_DIED;
+	}
+
+
+	if (finishedLevel()) {
+		playSound(SOUND_FINISHED_LEVEL);
+		return GWSTATUS_FINISHED_LEVEL;
+	}
+
 	//cleanup dead actors
 	vector<Actor*>::iterator it;
 	for (it = m_Actors.begin(); it != m_Actors.end();) {
@@ -90,7 +108,9 @@ int StudentWorld::move()
 	}
 	//Add new goodies
 
-	int chanceFungus, chanceGoodie, spawnFungus, spawnGoodie, pos_angle, x_pos, y_pos;
+
+	int chanceFungus, chanceGoodie, spawnFungus, spawnGoodie, pos_angle;
+	double x_pos,y_pos;
 	chanceFungus = max(510 - getLevel() * 10, 200);
 	chanceGoodie = max(510 - getLevel() * 10, 250);
 	//calculate chance for fungus spawn
@@ -154,7 +174,9 @@ int StudentWorld::move()
 	setGameStatText(oss.str());
 
 
+	
 
+	
 	return GWSTATUS_CONTINUE_GAME;
 }
 
@@ -167,6 +189,23 @@ void StudentWorld::cleanUp()
 		it = m_Actors.erase(it);
 	}
 }
+
+Socrates* StudentWorld::getPlayer() const {
+	return m_player;
+}
+
+bool StudentWorld::finishedLevel() const {
+	for (int i = 0; i < m_Actors.size(); i++) {
+		if (m_Actors[i]->isLevelObjective()) {
+			return false;
+		}
+	}
+	return true;
+}
+
+//////////////////
+///FOR SPAWNING ///
+///////////////////
 
 
 //Spawns Spray class when Socrates call for it
@@ -189,57 +228,37 @@ void StudentWorld::fireFlame() {
 	}
 }
 
-//Spawn Bacteria
+//Spawn Bacteria - TODO
 void StudentWorld::spawnBacteria(double xPos, double yPos, int spawnCode) {
 	Actor* temp;
 	
 	switch (spawnCode) {
 	case SPAWN_CODE_REGSALMON:
+		temp = new RegularSalmonella(this, xPos, yPos);
 		break;
-	case SPAWN_CODE_AGRSALMON:
+	case SPAWN_CODE_AGROSALMON:
+		temp = new AggresiveSalmonella(this, xPos, yPos);
 		break;
-	case SPAWN_CODE_ECOLI:
+	case SPAWN_CODE_REGECOLI:
+		temp = new RegularEColi(this, xPos, yPos);
 		break;
 	default:
 		return;
 	}
+	m_Actors.push_back(temp);
 	playSound(SOUND_BACTERIUM_BORN);
 	m_nBacteria++;
 }
 
+//Spawn Food
 
-
-
-//Spawn Bacteria when the pit determines it
-bool StudentWorld:: ammoHit(double xPos, double yPos, int damage) {
-
-	for (int i = 0; i < m_Actors.size(); i++) {
-		if(m_Actors[i]->canHit()) {
-			if (calculateDistance(xPos, yPos, m_Actors[i]->getX(), m_Actors[i]->getY()) <= SPRITE_WIDTH) {
-				m_Actors[i]->updateHealth(m_Actors[i]->getHealth() - damage);
-				return true;
-			}
-		}
-	}
-	return false;
+void StudentWorld::spawnFood(double xPos, double yPos) {
+	Actor* temp;
+	temp = new Food(this, xPos, yPos);
+	m_Actors.push_back(temp);
 }
 
-bool StudentWorld::overlapFood(double xPos, double yPos) {
-	for (int i = 0; i < m_Actors.size(); i++) {
-		if (m_Actors[i]->isEdible()) {
-			if (calculateDistance(xPos, yPos, m_Actors[i]->getX(), m_Actors[i]->getY()) <= SPRITE_WIDTH) {
-				m_Actors[i]->updateHealth(m_Actors[i]->getHealth() - 1);
-				return true;
-			}
-		}
-	}
-	return false;
-}
-
-Socrates* StudentWorld::getPlayer() const {
-	return m_player;
-}
-
+//Spawn pit, dirt, and food
 void StudentWorld::createTerrain(int count, int spawnCode) {
 	double x_pos, y_pos;
 	const int MAX_DISTANCE = 120;
@@ -269,12 +288,120 @@ void StudentWorld::createTerrain(int count, int spawnCode) {
 			default:
 				return;
 			}
-			 
+
 			m_Actors.push_back(temp);
 			i++;
 		}
 	}
 }
+
+//Spawn Bacteria when the pit determines it
+bool StudentWorld:: ammoHit(double xPos, double yPos, int damage) {
+
+	for (int i = 0; i < m_Actors.size(); i++) {
+		if(m_Actors[i]->canHit()) {
+			if (calculateDistance(xPos, yPos, m_Actors[i]->getX(), m_Actors[i]->getY()) <= SPRITE_WIDTH) {
+				m_Actors[i]->updateHealth(m_Actors[i]->getHealth() - damage);
+				if (m_Actors[i]->isBacteria()) {
+					playBacteriaSound(m_Actors[i]);
+				}
+				
+
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+bool StudentWorld::overlapEdibles(double xPos, double yPos) {
+	for (int i = 0; i < m_Actors.size(); i++) {
+		if (m_Actors[i]->isEdible()) {
+			if (calculateDistance(xPos, yPos, m_Actors[i]->getX(), m_Actors[i]->getY()) <= SPRITE_WIDTH) {
+				m_Actors[i]->updateHealth(m_Actors[i]->getHealth() - 1);
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+bool StudentWorld::overlapTerrain(double xPos, double yPos) {
+	for (int i = 0; i < m_Actors.size(); i++) {
+		if (m_Actors[i]->canBlock()) {
+			if (calculateDistance(xPos, yPos, m_Actors[i]->getX(), m_Actors[i]->getY()) <= SPRITE_WIDTH/2) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+bool StudentWorld::findFood(double xPos, double yPos, int& dirToFood) {
+	Actor* closest_Food = nullptr;
+	double min_distance = -1;
+	
+	for (int i = 0; i < m_Actors.size(); i++) {
+		if (m_Actors[i]->isEdible()) {
+			double disToFood = calculateDistance(xPos, yPos, m_Actors[i]->getX(), m_Actors[i]->getY());
+			if (disToFood > 128) {
+				continue;
+			}
+			else {
+				//see if it is the first one to be within 128 
+				if (min_distance == -1 || min_distance > disToFood) {
+					min_distance = disToFood;
+					closest_Food = m_Actors[i];
+				}
+			}
+		}
+	}
+
+	if (min_distance == -1 && closest_Food == nullptr) {
+		return false;
+		dirToFood = -1;
+	}
+
+	else {
+		dirToFood = atan((closest_Food->getY() - yPos) / (closest_Food->getX() - xPos)) * 180 * PI;
+		return true;
+	}
+
+}
+
+bool StudentWorld::findSocrates(double xPos, double yPos, int bounds, int& dirToSocrates) {
+	double disToPlayer = calculateDistance(xPos, yPos, m_player->getX(), m_player->getY());
+
+	if (disToPlayer <= bounds) {
+		dirToSocrates = atan((m_player->getY() - yPos) / (m_player->getX() - xPos)) * 180 * PI;
+		return true;
+	}
+	return false;
+
+}
+
+void StudentWorld::playBacteriaSound(Actor* b) {
+	if (b->isSalmonella()) {
+		if (b->isAlive()) {
+			playSound(SOUND_SALMONELLA_HURT);
+		}
+		else
+		{
+			playSound(SOUND_SALMONELLA_DIE);
+		}
+	}
+
+	if (b->isEColi()) {
+		if (b->isAlive()) {
+			playSound(SOUND_ECOLI_HURT);
+		}
+		else
+		{
+			playSound(SOUND_ECOLI_DIE);
+		}
+	}
+}
+
 ///////////////////////////////
  //Auxilliary 
  ///////////////////////////////

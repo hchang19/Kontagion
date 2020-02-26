@@ -63,20 +63,12 @@ bool Actor::isBacteria() const {
 bool Actor::isSalmonella() const {
 	return false;
 }
-/////////////////////////
-/////class Edible//////
-//////////////////////
 
-Edible::Edible(StudentWorld* world, double startX, double startY)
-	:Actor(world, IID_FOOD, startX, startY, 90, 1)
-{
-	return;
-}
-bool Edible::isEdible() const {
-	return true;
+bool Actor::isEColi() const {
+	return false;
 }
 
-bool Edible::canHit() const {
+bool Actor::isLevelObjective() const {
 	return false;
 }
 
@@ -111,7 +103,6 @@ void Socrates::doSomething() {
 	}
 	int keyPressed;
 	if (getWorld()->getKey(keyPressed)) {
-		const double PI = 4 * atan(1);
 		double newX, newY;
 
 		switch (keyPressed) {
@@ -154,8 +145,6 @@ void Socrates::doSomething() {
 		}
 	}
 
-	//check for sprays
-	//TODO
 	return;
 }
 
@@ -180,6 +169,23 @@ void Dirt::doSomething() {
 	return;
 }
 
+/////////////////////////
+/////class Edible//////
+//////////////////////
+
+Edible::Edible(StudentWorld* world, double startX, double startY)
+	:Actor(world, IID_FOOD, startX, startY, 90, 1)
+{
+	return;
+}
+bool Edible::isEdible() const {
+	return true;
+}
+
+bool Edible::canHit() const {
+	return false;
+}
+
 //////////////////////////
 ///Implementation of Food
 //////////////////////////
@@ -201,59 +207,60 @@ Pit::Pit(StudentWorld* world, double startX, double startY)
 	:Actor(world, IID_PIT, startX, startY, 0, 1, 1)
 {
 	m_nRegSalmon = 5;
-	m_nAgroSalmon = 3;
+	m_nAgrSalmon = 3;
 	m_nEColi = 2;
 	m_nTotal = 10;
-
-	m_valids.push_back("RegSalmon"); // 0 
-	m_valids.push_back("AgroSalmon"); // 1
-	m_valids.push_back("EColi"); //2
 }
 
 bool Pit::canHit() const {
 	return false;
 }
 
+bool Pit::isLevelObjective() const {
+	return true;
+}
+
 void Pit::doSomething() {
-	//TODO GOD HELP ME
+	//check if there are any bacteria left in pit
 	if (m_nTotal <= 0) {
 		updateHealth(getHealth() - 1);
 		return;
 	}
+	//determine whether or not to spawn
+	int spawnChance = randInt(1, 50);
+	if (spawnChance == 1) {
+		std::vector<int> m_valids;
+		//get the types of remaining bacteria
+		if (m_nRegSalmon > 0) {
+			m_valids.push_back(SPAWN_CODE_REGSALMON);
+		}
 
-	//int spawnChance = randInt(1, 50);
-	//if (spawnChance == 1) {
-	//	int pickSpawn = randInt(0, m_valids.size() - 1);
-	//	///Choose to use a vector to retain how much 
-	//	if (m_valids[pickSpawn] == "EColi") {
-	//		//Spawn Ecoli
-	//		getWorld()->spawnBacteria(getX(), getY(), SPAWN_CODE_ECOLI);
-	//		m_nEColi--;
-	//		if (m_nEColi == 0) {
-	//			m_valids.erase(m_valids.begin() + pickSpawn);
-	//		}
-	//		return;
-	//	}
-	//	else if (m_valids[pickSpawn] == "AgroSalmon") {
-	//		//Spawn Aggresive Salmonella
-	//		getWorld()->spawnBacteria(getX(), getY(), SPAWN_CODE_AGRSALMON);
-	//		m_nAgroSalmon--;
-	//		if (m_nAgroSalmon == 0) {
-	//			m_valids.erase(m_valids.begin() + pickSpawn);
-	//		}
-	//		return;
-	//	}
-	//	else if (m_valids[pickSpawn] == "RegSalmon") {
-	//		//Spawn Regular Salmonella
-	//		getWorld()->spawnBacteria(getX(), getY(), SPAWN_CODE_REGSALMON);
-	//		m_nRegSalmon--;
-	//		if (m_nRegSalmon == 0) {
-	//			m_valids.erase(m_valids.begin() + pickSpawn);
-	//		}
-	//		return;
-	//	}
+		if (m_nAgrSalmon > 0) {
+			m_valids.push_back(SPAWN_CODE_AGROSALMON);
+		}
 
-	//}
+		if (m_nEColi > 0) {
+			m_valids.push_back(SPAWN_CODE_REGECOLI);
+		}
+		int pickSpawn = randInt(0, m_valids.size() - 1);
+
+		//decrease the count of chosen bacteria
+		switch (m_valids[pickSpawn]) {
+		case SPAWN_CODE_REGSALMON:
+			m_nRegSalmon--;
+			break;
+		case SPAWN_CODE_AGROSALMON:
+			m_nAgrSalmon--;
+			break;
+		case SPAWN_CODE_REGECOLI:
+			m_nEColi--;
+			break;
+		}
+		//spawn specific bacteria by using spawn code which are global constants
+		getWorld()->spawnBacteria(getX(), getY(), m_valids[pickSpawn]);
+		
+		m_nTotal--;
+	}
 
 	return;
 }
@@ -327,14 +334,14 @@ void Drop::doSomething() {
 	if (!isAlive()) {
 		return;
 	}
-
+	//check for overlap with player
 	Actor* temp_player = getWorld()->getPlayer();
 	if (calculateDistance(getX(), getY(), temp_player->getX(), temp_player->getY()) <= SPRITE_WIDTH) {
 		doSpecialDrops();
 		updateHealth(getHealth() - 1);
 		return;
 	}
-
+	//see if it has existed for too long
 	if (m_time > m_maxTime) {
 		updateHealth(getHealth() - 1);
 		return;
@@ -405,6 +412,7 @@ void Fungus::doSpecialDrops() {
 	Socrates* temp_player = getWorld()->getPlayer();
 
 	getWorld()->increaseScore(-50);
+	getWorld()->playSound(SOUND_PLAYER_HURT);
 	temp_player->updateHealth(temp_player->getHealth() - 20);
 }
 
@@ -416,10 +424,23 @@ Bacteria::Bacteria(StudentWorld* world, double startX, double startY, int imageI
 	:Actor(world, imageID, startX, startY, 90, 0, health)
 {
 	m_nFood = 0;
-	m_distancePlan = 0;
+
 	m_damage = damage;
 }
+
+Bacteria::~Bacteria() {
+	getWorld()->increaseScore(100);
+	int foodChance = randInt(0, 1);
+	if (foodChance == 0) {
+		getWorld()->spawnFood(getX(), getY());
+	}
+}
+
 bool Bacteria::isBacteria() const {
+	return true;
+}
+
+bool Bacteria::isLevelObjective() const {
 	return true;
 }
 
@@ -428,15 +449,16 @@ void Bacteria::doSomething() {
 		return;
 	}
 
-	doSpecialBacteria();
+	//see if it hits anything
 	Socrates* temp_player = getWorld()->getPlayer();
 	if (calculateDistance(getX(), getY(), temp_player->getX(), temp_player->getY()) <= SPRITE_WIDTH) {
+		getWorld()->playSound(SOUND_PLAYER_HURT);
 		temp_player->updateHealth(temp_player->getHealth() - m_damage);
-
+		doSpecialBacteria();
 		return;
 	}
 
-	// check whether or not to spawn another food
+	// check whether or not to clone
 	if (m_nFood == 3) {
 		double xPos, yPos;
 		//calculate new x pos
@@ -455,15 +477,172 @@ void Bacteria::doSomething() {
 		else if (yPos > VIEW_HEIGHT / 2) {
 			yPos -= SPRITE_WIDTH / 2;
 		}
-		//call copyfunction
+		//calls spawn bacteria with the special spawn code
 		createSpecialClone(xPos, yPos);
 		m_nFood = 0;
 	}
 
 	//check for food
 
-	if (getWorld()->overlapFood(getX(), getY())) {
+	if (getWorld()->overlapEdibles(getX(), getY())) {
 		m_nFood++;
 	}
+	//movement for each special type of Bacteria
+	doSpecialBacteria();
 	//wants to continue moving in same direction
+}
+
+/////////////////////////////////////
+/////Salmonella class/////////////
+////////////////////////////////
+
+Salmonella::Salmonella(StudentWorld* world, double startX, double startY, int health, int damage)
+	:Bacteria(world, startX, startY,IID_SALMONELLA, health, damage)
+{
+	m_distancePlan = 0;
+}
+
+bool Salmonella::isSalmonella() const {
+	return true;
+}
+
+void Salmonella::doSpecialBacteria() {
+	//boolean for special case of Salmonella Regular or Aggresive
+
+	if (doSpecialSalmonella()) {
+		return;
+	}
+	if (m_distancePlan > 0) {
+		m_distancePlan--;
+
+		double xPos, yPos;
+		getPositionInThisDirection(getDirection(), 3, xPos, yPos);
+		//check if it will be blocked or out of bounds
+		if (getWorld()->overlapTerrain(xPos, yPos) || calculateDistance(xPos, yPos, VIEW_WIDTH / 2, VIEW_HEIGHT / 2) >= VIEW_RADIUS) {
+			setDirection(randInt(0, 359));
+			m_distancePlan = 10;
+		}
+		else {
+			moveAngle(getDirection(), 3);
+		}
+		return;
+	}
+	//no distance plan
+	else {
+		int temp_dir;
+		double xPos, yPos;
+		if (getWorld()->findFood(getX(), getY(), temp_dir)) {
+			getPositionInThisDirection(temp_dir, 3, xPos, yPos);
+			//check if the direction toward the nearest food intercept dirt ADDED TO MAKE SURE IT REMAINS IN THE PETRI DISH
+			if (!getWorld()->overlapTerrain(xPos, yPos) && calculateDistance(xPos, yPos, VIEW_WIDTH / 2, VIEW_HEIGHT / 2) < VIEW_RADIUS) {
+				//chase after nearest food if there is one and doesn't intercept
+				moveAngle(temp_dir, 3);
+				return;
+			}
+		}
+
+		setDirection(randInt(0, 359));
+		m_distancePlan = 10;
+	}
+}
+
+////////////////////////////////
+/////Regular Salmonella/////////
+////////////////////////////////
+RegularSalmonella::RegularSalmonella(StudentWorld* world, double startX, double startY) 
+:Salmonella(world, startX, startY, 4, 0)
+{
+	return;
+}
+
+void RegularSalmonella::createSpecialClone(double startX, double startY) {
+	getWorld()->spawnBacteria(startX, startY, SPAWN_CODE_REGSALMON);
+}
+
+bool RegularSalmonella::doSpecialSalmonella() {
+	return false;
+}
+
+//////////////////////////////////
+/////AggresiveSalmonella///////
+/////////////////////////////
+
+AggresiveSalmonella::AggresiveSalmonella(StudentWorld* world, double startX, double startY) 
+	:Salmonella(world, startX, startY, 10, 0)
+{
+	return;
+}
+
+void AggresiveSalmonella::createSpecialClone(double startX, double startY) {
+	getWorld()->spawnBacteria(startX, startY, SPAWN_CODE_AGROSALMON);
+}
+
+bool AggresiveSalmonella::doSpecialSalmonella() {
+	//BUG WHEN IT IS RIGHT NEXT TO SOCRATES
+	int dirToPlayer;
+
+	if (getWorld()->findSocrates(getX(),getY(),72,dirToPlayer)) {
+		double xPos, yPos;
+		getPositionInThisDirection(dirToPlayer, 3, xPos, yPos);
+		if (!getWorld()->overlapTerrain(xPos, yPos) && calculateDistance(xPos, yPos, VIEW_WIDTH / 2, VIEW_HEIGHT / 2) < VIEW_RADIUS) {
+			//chase after nearest food if there is one and doesn't intercept
+			moveAngle(dirToPlayer, 3);
+		}
+		return true;
+	}
+	return false;
+}
+
+/////////////////////////////
+//////EColi Class/////////
+////////////////////////////
+
+EColi::EColi(StudentWorld* world, double startX, double startY, int health, int damage) 
+:Bacteria(world, startX, startY, IID_ECOLI, health, damage)
+{
+	return;
+}
+
+bool EColi::isEColi() const {
+	return true;
+}
+
+void EColi::doSpecialBacteria() {
+
+	int dirToPlayer;
+	if (getWorld()->findSocrates(getX(), getY(), 256, dirToPlayer)) {
+		for (int i = 0; i < 10; i++) {
+			double xPos, yPos;
+			getPositionInThisDirection(dirToPlayer, 2, xPos, yPos);
+			if (!getWorld()->overlapTerrain(xPos, yPos) && calculateDistance(xPos, yPos, VIEW_WIDTH / 2, VIEW_HEIGHT / 2) < VIEW_RADIUS) {
+				moveAngle(dirToPlayer, 2);
+				break;
+			}
+
+			dirToPlayer += 10;
+			if (dirToPlayer >= 360) {
+				dirToPlayer = dirToPlayer % 360;
+			}
+
+		}
+		return;
+	}
+}
+
+////////////////////////////
+/////REGULAR ECOLI////////
+/////////////////////////
+
+RegularEColi::RegularEColi(StudentWorld* world, double startX, double startY) 
+	:EColi(world, startX, startY,5, 0)
+{
+	return;
+}
+
+void RegularEColi::createSpecialClone(double startX, double startY) {
+	getWorld()->spawnBacteria(startX, startY, SPAWN_CODE_REGECOLI);
+}
+
+bool RegularEColi::doSpecialEColi() {
+	return false;
 }
