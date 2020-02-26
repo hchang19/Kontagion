@@ -59,7 +59,7 @@ int StudentWorld::init()
 	createTerrain(pit_count, SPAWN_CODE_PIT);
 	//LOAD FOOD - check no food collide
 
-	//createTerrain(food_count, SPAWN_CODE_FOOD);
+	createTerrain(food_count, SPAWN_CODE_FOOD);
 	//LOAD DIRT - can overlap dirt
 
 	createTerrain(dirt_count, SPAWN_CODE_DIRT);
