@@ -10,35 +10,19 @@
 #include <iomanip>
 using namespace std;
 
-///////////////////////////////
-
-
-
-
-
-///////////THE DAMAGE FOR EACH BACTERIA IS SET TO 0 FOR TESTING PURPOSE CHANGE BACK BEFORE YOU SUBMIT 
-////////////REMEMBER DUMBASS
-
-
-
-
-
-
-///////////////////////////
 GameWorld* createStudentWorld(string assetPath)
 {
 	return new StudentWorld(assetPath);
 }
 
-// Students:  Add code to this file, StudentWorld.h, Actor.h and Actor.cpp
 
 StudentWorld::StudentWorld(string assetPath)
 	: GameWorld(assetPath)
 {
-	m_nBacteria = 0;
 	m_player = nullptr;
 }
 
+//delete everything from the stage
 StudentWorld::~StudentWorld() {
 	cleanUp();
 }
@@ -47,7 +31,6 @@ int StudentWorld::init()
 {
 	const int CURRENT_LEVEL = getLevel();
 	m_player = new Socrates(this);
-	m_nBacteria = 0;
 	
 	//calculate amount of pit, food and dirt
 	int dirt_count = max(180 - 20 * CURRENT_LEVEL, 20);
@@ -83,13 +66,13 @@ int StudentWorld::move()
 		}
 	}
 
+	//check if player died
 	if (!m_player->isAlive()) {
 		decLives();
 		playSound(SOUND_PLAYER_DIE);
 		return GWSTATUS_PLAYER_DIED;
 	}
-
-
+	//check if the player is completed
 	if (finishedLevel()) {
 		playSound(SOUND_FINISHED_LEVEL);
 		return GWSTATUS_FINISHED_LEVEL;
@@ -106,14 +89,14 @@ int StudentWorld::move()
 			it++;
 		}
 	}
+
+
 	//Add new goodies
-
-
 	int chanceFungus, chanceGoodie, spawnFungus, spawnGoodie, pos_angle;
 	double x_pos,y_pos;
 	chanceFungus = max(510 - getLevel() * 10, 200);
 	chanceGoodie = max(510 - getLevel() * 10, 250);
-	//calculate chance for fungus spawn
+	//calculate chance for fungus spawn and then randomly spawns it
 
 	spawnFungus = randInt(0, chanceFungus - 1);
 	if (spawnFungus == 0) {
@@ -139,7 +122,6 @@ int StudentWorld::move()
 		//spawns flameGoodie
 		else if (determine <= 90) {
 			temp = new FlameGoodie(this, x_pos, y_pos);
-
 		}
 		//spawn LifeGoodie
 		else {
@@ -160,7 +142,7 @@ int StudentWorld::move()
 	oss << "Score: ";
 	oss.fill('0');
 	oss << setw(6) << getScore() << "  ";
-	
+
 	oss.fill(' ');
 	oss << "Level: " << setw(2) << getLevel() << "  ";
 
@@ -173,8 +155,6 @@ int StudentWorld::move()
 	oss << "Flames: " << setw(2) << m_player->getFlame() << "  ";
 	setGameStatText(oss.str());
 
-
-	
 
 	
 	return GWSTATUS_CONTINUE_GAME;
@@ -194,6 +174,7 @@ Socrates* StudentWorld::getPlayer() const {
 	return m_player;
 }
 
+//check if there is still anything for Socrates to kill
 bool StudentWorld::finishedLevel() const {
 	for (int i = 0; i < m_Actors.size(); i++) {
 		if (m_Actors[i]->isLevelObjective()) {
@@ -216,7 +197,7 @@ void StudentWorld::fireSpray() {
 	m_Actors.push_back(temp);
 }
 
-//Spawn Flame class when Socrates call for it
+//Spawn Flame class in a circle when Socrates call for it
 void StudentWorld::fireFlame() {
 	double x_pos, y_pos;
 	int temp_dir = m_player->getDirection();
@@ -228,7 +209,7 @@ void StudentWorld::fireFlame() {
 	}
 }
 
-//Spawn Bacteria - TODO
+//Spawn Bacteria
 void StudentWorld::spawnBacteria(double xPos, double yPos, int spawnCode) {
 	Actor* temp;
 	
@@ -247,11 +228,9 @@ void StudentWorld::spawnBacteria(double xPos, double yPos, int spawnCode) {
 	}
 	m_Actors.push_back(temp);
 	playSound(SOUND_BACTERIUM_BORN);
-	m_nBacteria++;
 }
 
 //Spawn Food
-
 void StudentWorld::spawnFood(double xPos, double yPos) {
 	Actor* temp;
 	temp = new Food(this, xPos, yPos);
@@ -295,7 +274,7 @@ void StudentWorld::createTerrain(int count, int spawnCode) {
 	}
 }
 
-//Spawn Bacteria when the pit determines it
+//return true if the Ammo class hits something and reduce the hit object's health
 bool StudentWorld:: ammoHit(double xPos, double yPos, int damage) {
 
 	for (int i = 0; i < m_Actors.size(); i++) {
@@ -305,15 +284,13 @@ bool StudentWorld:: ammoHit(double xPos, double yPos, int damage) {
 				if (m_Actors[i]->isBacteria()) {
 					playBacteriaSound(m_Actors[i]);
 				}
-				
-
 				return true;
 			}
 		}
 	}
 	return false;
 }
-
+//return true if the xPos and yPos overlaps an edible
 bool StudentWorld::overlapEdibles(double xPos, double yPos) {
 	for (int i = 0; i < m_Actors.size(); i++) {
 		if (m_Actors[i]->isEdible()) {
@@ -325,7 +302,7 @@ bool StudentWorld::overlapEdibles(double xPos, double yPos) {
 	}
 	return false;
 }
-
+//return true if the xPos and yPos overlaps a class that can block them
 bool StudentWorld::overlapTerrain(double xPos, double yPos) {
 	for (int i = 0; i < m_Actors.size(); i++) {
 		if (m_Actors[i]->canBlock()) {
@@ -337,10 +314,12 @@ bool StudentWorld::overlapTerrain(double xPos, double yPos) {
 	return false;
 }
 
+//return true if there is food within 128 pixels. set dirToFood to the direction of the nearest one
 bool StudentWorld::findFood(double xPos, double yPos, int& dirToFood) {
 	Actor* closest_Food = nullptr;
 	double min_distance = -1;
 	
+	//loop through and check if there is an edible within the radius
 	for (int i = 0; i < m_Actors.size(); i++) {
 		if (m_Actors[i]->isEdible()) {
 			double disToFood = calculateDistance(xPos, yPos, m_Actors[i]->getX(), m_Actors[i]->getY());
@@ -348,7 +327,7 @@ bool StudentWorld::findFood(double xPos, double yPos, int& dirToFood) {
 				continue;
 			}
 			else {
-				//see if it is the first one to be within 128 
+				//see if it is the first one to be within 128 or compare the size
 				if (min_distance == -1 || min_distance > disToFood) {
 					min_distance = disToFood;
 					closest_Food = m_Actors[i];
@@ -368,7 +347,7 @@ bool StudentWorld::findFood(double xPos, double yPos, int& dirToFood) {
 	}
 
 }
-
+//return true if player is within the bounds radius and set dirToSocrates to the specific pdirection
 bool StudentWorld::findSocrates(double xPos, double yPos, int bounds, int& dirToSocrates) {
 	double disToPlayer = calculateDistance(xPos, yPos, m_player->getX(), m_player->getY());
 
@@ -379,7 +358,7 @@ bool StudentWorld::findSocrates(double xPos, double yPos, int bounds, int& dirTo
 	return false;
 
 }
-
+//given an Actor pointer. Determine which type of pointer and if its dead or alive. Play the sound accordingly
 void StudentWorld::playBacteriaSound(Actor* b) {
 	if (b->isSalmonella()) {
 		if (b->isAlive()) {
@@ -403,9 +382,9 @@ void StudentWorld::playBacteriaSound(Actor* b) {
 }
 
 ///////////////////////////////
- //Auxilliary 
+ //Auxilliary return the distance between two points
  ///////////////////////////////
 double calculateDistance(double startX, double startY, double finalX, double finalY) {
 	double distance = sqrt(pow(finalX - startX, 2) + pow(finalY - startY, 2));
-	return ceil(distance);
+	return distance;
 }

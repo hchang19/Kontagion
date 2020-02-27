@@ -68,7 +68,7 @@ public:
 private:
     Socrates * m_player;
     std::vector<Actor*> m_Actors;
-    int m_nBacteria;
+
 };
 
 //Auxilliary Functions

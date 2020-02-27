@@ -46,8 +46,8 @@ public:
 	Socrates(StudentWorld* world);
 
 	virtual void doSomething();
-	void updateFlame(int f);
 
+	void updateFlame(int f);
 	int getFlame() const;
 	int getSpray() const;
 private:
@@ -109,7 +109,6 @@ public:
 	virtual void doSomething();
 	virtual bool canHit() const;
 private:
-	double m_distance;
 	double MAX_DISTANCE;
 	int m_damage;
 	double m_initX, m_initY;

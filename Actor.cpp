@@ -20,37 +20,46 @@ Actor::~Actor() {
 	return;
 }
 
+//return the current health of the actor
 int Actor::getHealth() const {
 	return m_health;
 }
-
+//set the health of actor to the input
 void Actor::updateHealth(int h) {
 	m_health = h;
 }
-
+//return true if actor is alive
 bool Actor::isAlive() const {
 	return (m_health > 0);
 }
-
+//return the wojrld pointer
 StudentWorld* Actor::getWorld() {
 	return m_world;
 }
 
-//Virtual functions
-bool Actor::canOverlap() const {
-	return false;
-}
-
-bool Actor::canHit() const {
-	return true;
-}
-
-bool Actor::canBlock() const {
-	return false;
-}
+//MUST CALL
 void Actor::doSomething() {
 	return;
 }
+/////////////////////
+//Virtual functions - used to determine the specific behavior that might spam across classes
+/////////////////////
+
+//return true if object can be overlaped when spawning
+bool Actor::canOverlap() const {
+	return false;
+}
+//return true if object can be hit by the flame or spray
+bool Actor::canHit() const {
+	return true;
+}
+//return true if object can stop another sprite to moving onto it
+bool Actor::canBlock() const {
+	return false;
+}
+
+
+//return true if it is derived from said base class
 
 bool Actor::isEdible() const {
 	return false;
@@ -68,6 +77,7 @@ bool Actor::isEColi() const {
 	return false;
 }
 
+//return true if it prevents going to the next level
 bool Actor::isLevelObjective() const {
 	return false;
 }
@@ -97,10 +107,11 @@ int Socrates::getSpray() const {
 }
 
 void Socrates::doSomething() {
-	//TODO p . 25
+	
 	if (!isAlive()) {
 		return;
 	}
+	//detect key press
 	int keyPressed;
 	if (getWorld()->getKey(keyPressed)) {
 		double newX, newY;
@@ -112,14 +123,16 @@ void Socrates::doSomething() {
 		case KEY_PRESS_RIGHT:
 			pos_angle += 5;
 			break;
+		//key to fire the spray gun
 		case KEY_PRESS_SPACE:
-			addSpray = false; //to avoid spamming
+			addSpray = false; //moved this limit up to avoid spamming
 			if (m_nSpray > 0) {
 				getWorld()->fireSpray();
 				getWorld()->playSound(SOUND_PLAYER_SPRAY);
 				m_nSpray--;
 			}
 			break;
+		//key to fire the flame thrower
 		case KEY_PRESS_ENTER:
 			if (m_nFlame > 0) {
 				getWorld()->fireFlame();
@@ -130,13 +143,14 @@ void Socrates::doSomething() {
 		default:
 			return;
 		}
-
+		//if there is a new pos_angle, it will move around the circle
 		newX = VIEW_RADIUS * cos(pos_angle * 1.0 / 180 * PI) + VIEW_WIDTH / 2;
 		newY = VIEW_RADIUS * sin(pos_angle * 1.0 / 180 * PI) + VIEW_HEIGHT / 2;
 		moveTo(newX, newY);
 		setDirection(pos_angle + 180);
 	}
 	else {
+		//check whether to refill the spray
 		if (!addSpray) {
 			addSpray = true;
 		}
@@ -170,7 +184,7 @@ void Dirt::doSomething() {
 }
 
 /////////////////////////
-/////class Edible//////
+/////class Edible - benefits bacteria and is only edible by bacterias. Do not perish
 //////////////////////
 
 Edible::Edible(StudentWorld* world, double startX, double startY)
@@ -186,8 +200,9 @@ bool Edible::canHit() const {
 	return false;
 }
 
+
 //////////////////////////
-///Implementation of Food
+///Implementation of Food - a type of edibles
 //////////////////////////
 
 Food::Food(StudentWorld* world, double startX, double startY)
@@ -201,7 +216,7 @@ void Food::doSomething() {
 }
 
 ////////////////////////
-/////Implementation of Pit
+/////Implementation of Pit - the bacteria spawner
 /////////////////////////////
 Pit::Pit(StudentWorld* world, double startX, double startY)
 	:Actor(world, IID_PIT, startX, startY, 0, 1, 1)
@@ -226,10 +241,12 @@ void Pit::doSomething() {
 		updateHealth(getHealth() - 1);
 		return;
 	}
+
 	//determine whether or not to spawn
 	int spawnChance = randInt(1, 50);
 	if (spawnChance == 1) {
 		std::vector<int> m_valids;
+
 		//get the types of remaining bacteria
 		if (m_nRegSalmon > 0) {
 			m_valids.push_back(SPAWN_CODE_REGSALMON);
@@ -242,6 +259,8 @@ void Pit::doSomething() {
 		if (m_nEColi > 0) {
 			m_valids.push_back(SPAWN_CODE_REGECOLI);
 		}
+
+		//randomly pick a spawn type from the available options
 		int pickSpawn = randInt(0, m_valids.size() - 1);
 
 		//decrease the count of chosen bacteria
@@ -258,7 +277,6 @@ void Pit::doSomething() {
 		}
 		//spawn specific bacteria by using spawn code which are global constants
 		getWorld()->spawnBacteria(getX(), getY(), m_valids[pickSpawn]);
-		
 		m_nTotal--;
 	}
 
@@ -266,11 +284,13 @@ void Pit::doSomething() {
 }
 
 ////////////////////////////////
-///Implementation of Ammo //parent of flame and spray
+///Implementation of Ammo //base of things Socrates can Fire
 ////////////////////////////////
+
+//Derived class with pass in their max travel distance, starting position, damage, and imageID
 Ammo::Ammo(StudentWorld* world, double startX, double startY, int dir, double MaxDistance, int ImageID, int damage)
 	:Actor(world, ImageID, startX, startY, dir, 1, 1) {
-	m_distance = 0;
+	
 	m_initX = startX;
 	m_damage = damage;
 	m_initY = startY;
@@ -285,9 +305,9 @@ void Ammo::doSomething() {
 	if (!isAlive()) {
 		return;
 	}
-	m_distance = calculateDistance(m_initX, m_initY, getX(), getY());
+	double m_distance = calculateDistance(m_initX, m_initY, getX(), getY());
 	//check if it flied for too long
-	if (m_distance >= MAX_DISTANCE) {
+	if (ceil(m_distance) >= MAX_DISTANCE) {
 		updateHealth(getHealth() - 1);
 		return;
 	}
@@ -321,13 +341,13 @@ Spray::Spray(StudentWorld* world, double startX, double startY, int dir)
 }
 
 ///////////////////////
-//DROP CLASS - spec pg.33
+//DROP CLASS - base class for goodies for Socrates to pick up
  /////////////////////////
 Drop::Drop(StudentWorld* world, double startX, double startY, int ImageID)
 	:Actor(world, ImageID, startX, startY, 0, 1, 1)
 {
 	m_time = 0;
-	m_maxTime = max(randInt(0, 300 - (10 * getWorld()->getLevel()) - 1), 50); //unclear specs, will specify
+	m_maxTime = max(randInt(0, 300 - (10 * getWorld()->getLevel()) - 1), 50); 
 }
 
 void Drop::doSomething() {
@@ -341,6 +361,7 @@ void Drop::doSomething() {
 		updateHealth(getHealth() - 1);
 		return;
 	}
+
 	//see if it has existed for too long
 	if (m_time > m_maxTime) {
 		updateHealth(getHealth() - 1);
@@ -359,7 +380,7 @@ HealthGoodie::HealthGoodie(StudentWorld* world, double startX, double startY) :
 {
 	return;
 }
-
+//reset health to 100 and increase score
 void HealthGoodie::doSpecialDrops() {
 	getWorld()->increaseScore(250);
 	getWorld()->playSound(SOUND_GOT_GOODIE);
@@ -376,6 +397,7 @@ FlameGoodie::FlameGoodie(StudentWorld* world, double startX, double startY) :
 	return;
 }
 
+//increase flame count by 5 and increase score
 void FlameGoodie::doSpecialDrops() {
 	Socrates* player = getWorld()->getPlayer();
 	getWorld()->increaseScore(300);
@@ -393,6 +415,7 @@ LifeGoodie::LifeGoodie(StudentWorld* world, double startX, double startY) :
 	return;
 }
 
+//gives the player extra life and increase points
 void LifeGoodie::doSpecialDrops() {
 	getWorld()->increaseScore(500);
 	getWorld()->playSound(SOUND_GOT_GOODIE);
@@ -408,26 +431,27 @@ Fungus::Fungus(StudentWorld* world, double startX, double startY)
 {
 	return;
 }
+
+//decrease Socrates health, play hurt sound, and reduce points
 void Fungus::doSpecialDrops() {
 	Socrates* temp_player = getWorld()->getPlayer();
-
 	getWorld()->increaseScore(-50);
 	getWorld()->playSound(SOUND_PLAYER_HURT);
 	temp_player->updateHealth(temp_player->getHealth() - 20);
 }
 
 ///////////////////
-/////Bacteria class////////
+/////Bacteria class - base class for all bacterias
 //////////////////////
 
 Bacteria::Bacteria(StudentWorld* world, double startX, double startY, int imageID, int health, int damage)
 	:Actor(world, imageID, startX, startY, 90, 0, health)
 {
 	m_nFood = 0;
-
 	m_damage = damage;
 }
 
+//when bacteria dies, determine if they should become food
 Bacteria::~Bacteria() {
 	getWorld()->increaseScore(100);
 	int foodChance = randInt(0, 1);
@@ -440,6 +464,7 @@ bool Bacteria::isBacteria() const {
 	return true;
 }
 
+//must kill all bacterias to move onto next level
 bool Bacteria::isLevelObjective() const {
 	return true;
 }
@@ -449,7 +474,7 @@ void Bacteria::doSomething() {
 		return;
 	}
 
-	//see if it hits anything
+	//see if it hits the player. If it does, damage Socrates and skip detecting food or cloning
 	Socrates* temp_player = getWorld()->getPlayer();
 	if (calculateDistance(getX(), getY(), temp_player->getX(), temp_player->getY()) <= SPRITE_WIDTH) {
 		getWorld()->playSound(SOUND_PLAYER_HURT);
@@ -493,7 +518,7 @@ void Bacteria::doSomething() {
 }
 
 /////////////////////////////////////
-/////Salmonella class/////////////
+/////Salmonella class - base class for all types of Salmonella
 ////////////////////////////////
 
 Salmonella::Salmonella(StudentWorld* world, double startX, double startY, int health, int damage)
@@ -508,16 +533,16 @@ bool Salmonella::isSalmonella() const {
 
 void Salmonella::doSpecialBacteria() {
 	//boolean for special case of Salmonella Regular or Aggresive
-
 	if (doSpecialSalmonella()) {
 		return;
 	}
+	//check if it has a distance plan
 	if (m_distancePlan > 0) {
 		m_distancePlan--;
 
 		double xPos, yPos;
 		getPositionInThisDirection(getDirection(), 3, xPos, yPos);
-		//check if it will be blocked or out of bounds
+		//check if it will be blocked or out of bounds or if it will hit a terrain
 		if (getWorld()->overlapTerrain(xPos, yPos) || calculateDistance(xPos, yPos, VIEW_WIDTH / 2, VIEW_HEIGHT / 2) >= VIEW_RADIUS) {
 			setDirection(randInt(0, 359));
 			m_distancePlan = 10;
@@ -550,7 +575,7 @@ void Salmonella::doSpecialBacteria() {
 /////Regular Salmonella/////////
 ////////////////////////////////
 RegularSalmonella::RegularSalmonella(StudentWorld* world, double startX, double startY) 
-:Salmonella(world, startX, startY, 4, 0)
+:Salmonella(world, startX, startY, 4, 1)
 {
 	return;
 }
@@ -568,7 +593,7 @@ bool RegularSalmonella::doSpecialSalmonella() {
 /////////////////////////////
 
 AggresiveSalmonella::AggresiveSalmonella(StudentWorld* world, double startX, double startY) 
-	:Salmonella(world, startX, startY, 10, 0)
+	:Salmonella(world, startX, startY, 10, 2)
 {
 	return;
 }
@@ -581,11 +606,12 @@ bool AggresiveSalmonella::doSpecialSalmonella() {
 	//BUG WHEN IT IS RIGHT NEXT TO SOCRATES
 	int dirToPlayer;
 
+	//check if it find Socrates within 72 pixels
 	if (getWorld()->findSocrates(getX(),getY(),72,dirToPlayer)) {
 		double xPos, yPos;
 		getPositionInThisDirection(dirToPlayer, 3, xPos, yPos);
+		//chase after socrates if it doesn't go out of bounds or hit dirt
 		if (!getWorld()->overlapTerrain(xPos, yPos) && calculateDistance(xPos, yPos, VIEW_WIDTH / 2, VIEW_HEIGHT / 2) < VIEW_RADIUS) {
-			//chase after nearest food if there is one and doesn't intercept
 			moveAngle(dirToPlayer, 3);
 		}
 		return true;
@@ -594,7 +620,7 @@ bool AggresiveSalmonella::doSpecialSalmonella() {
 }
 
 /////////////////////////////
-//////EColi Class/////////
+//////EColi Class - base class for all Ecoli 
 ////////////////////////////
 
 EColi::EColi(StudentWorld* world, double startX, double startY, int health, int damage) 
@@ -610,15 +636,17 @@ bool EColi::isEColi() const {
 void EColi::doSpecialBacteria() {
 
 	int dirToPlayer;
+	//check if it finds socrates within 256 pixels
 	if (getWorld()->findSocrates(getX(), getY(), 256, dirToPlayer)) {
 		for (int i = 0; i < 10; i++) {
 			double xPos, yPos;
+			//attempt to move toward socrates
 			getPositionInThisDirection(dirToPlayer, 2, xPos, yPos);
 			if (!getWorld()->overlapTerrain(xPos, yPos) && calculateDistance(xPos, yPos, VIEW_WIDTH / 2, VIEW_HEIGHT / 2) < VIEW_RADIUS) {
 				moveAngle(dirToPlayer, 2);
 				break;
 			}
-
+			//turn up to 10 times to get to socrates
 			dirToPlayer += 10;
 			if (dirToPlayer >= 360) {
 				dirToPlayer = dirToPlayer % 360;
@@ -634,15 +662,16 @@ void EColi::doSpecialBacteria() {
 /////////////////////////
 
 RegularEColi::RegularEColi(StudentWorld* world, double startX, double startY) 
-	:EColi(world, startX, startY,5, 0)
+	:EColi(world, startX, startY,5, 4)
 {
 	return;
 }
 
+//spawn REGECOLI when the clone function is cloned
 void RegularEColi::createSpecialClone(double startX, double startY) {
 	getWorld()->spawnBacteria(startX, startY, SPAWN_CODE_REGECOLI);
 }
-
+//deosn't do anything special
 bool RegularEColi::doSpecialEColi() {
 	return false;
 }
