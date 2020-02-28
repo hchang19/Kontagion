@@ -561,7 +561,8 @@ void Salmonella::doSpecialBacteria() {
 			//check if the direction toward the nearest food intercept dirt ADDED TO MAKE SURE IT REMAINS IN THE PETRI DISH
 			if (!getWorld()->overlapTerrain(xPos, yPos) && calculateDistance(xPos, yPos, VIEW_WIDTH / 2, VIEW_HEIGHT / 2) < VIEW_RADIUS) {
 				//chase after nearest food if there is one and doesn't intercept
-				moveAngle(temp_dir, 3);
+				setDirection(temp_dir);
+				moveAngle(getDirection(), 3);
 				return;
 			}
 		}
@@ -612,7 +613,8 @@ bool AggresiveSalmonella::doSpecialSalmonella() {
 		getPositionInThisDirection(dirToPlayer, 3, xPos, yPos);
 		//chase after socrates if it doesn't go out of bounds or hit dirt
 		if (!getWorld()->overlapTerrain(xPos, yPos) && calculateDistance(xPos, yPos, VIEW_WIDTH / 2, VIEW_HEIGHT / 2) < VIEW_RADIUS) {
-			moveAngle(dirToPlayer, 3);
+			setDirection(dirToPlayer);
+			moveAngle(getDirection(), 3);
 		}
 		return true;
 	}
@@ -643,7 +645,8 @@ void EColi::doSpecialBacteria() {
 			//attempt to move toward socrates
 			getPositionInThisDirection(dirToPlayer, 2, xPos, yPos);
 			if (!getWorld()->overlapTerrain(xPos, yPos) && calculateDistance(xPos, yPos, VIEW_WIDTH / 2, VIEW_HEIGHT / 2) < VIEW_RADIUS) {
-				moveAngle(dirToPlayer, 2);
+				setDirection(dirToPlayer);
+				moveAngle(getDirection(), 2);
 				break;
 			}
 			//turn up to 10 times to get to socrates

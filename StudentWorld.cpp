@@ -41,13 +41,12 @@ int StudentWorld::init()
 	//LOAD PITS - check no pits collide
 	createTerrain(pit_count, SPAWN_CODE_PIT);
 	//LOAD FOOD - check no food collide
-
 	createTerrain(food_count, SPAWN_CODE_FOOD);
 	//LOAD DIRT - can overlap dirt
 
 	createTerrain(dirt_count, SPAWN_CODE_DIRT);
 
-	/////TESTING NEW CLASSES
+	/////TESTING NEW CLASSES 
 	return GWSTATUS_CONTINUE_GAME;
 }
 
@@ -342,7 +341,8 @@ bool StudentWorld::findFood(double xPos, double yPos, int& dirToFood) {
 	}
 
 	else {
-		dirToFood = atan((closest_Food->getY() - yPos) / (closest_Food->getX() - xPos)) * 180 * PI;
+		dirToFood = atan2((closest_Food->getY() - yPos) , (closest_Food->getX() - xPos)) * 180 / PI;
+		dirToFood = (dirToFood + 360) % 360;
 		return true;
 	}
 
@@ -352,7 +352,8 @@ bool StudentWorld::findSocrates(double xPos, double yPos, int bounds, int& dirTo
 	double disToPlayer = calculateDistance(xPos, yPos, m_player->getX(), m_player->getY());
 
 	if (disToPlayer <= bounds) {
-		dirToSocrates = atan((m_player->getY() - yPos) / (m_player->getX() - xPos)) * 180 * PI;
+		dirToSocrates = atan2((m_player->getY() - yPos) , (m_player->getX() - xPos)) * 180/ PI;
+		dirToSocrates = (dirToSocrates + 360) % 360;
 		return true;
 	}
 	return false;
