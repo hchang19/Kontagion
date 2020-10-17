@@ -1,4 +1,5 @@
-A simple shooting game called Kontagion where the player controls Socrates
+# KONTAGION
+## GAME DESCRIPTION
 
 On the left of the Petri dish, you can see our hero Socrates (pronounced “SOCK ra tease,”
 or “SO crates” for fans of Bill and Ted’s Excellent Adventure) in his hazmat suit. Socrates
@@ -15,6 +16,7 @@ contact with Socrates they will attempt to injure him. In the middle of the Petr
 see a pit leading to the area where the bacteria take their afternoon naps (after late night
 ragers on toilet seats in the frats along Gayley Ave). The bacteria emerge from these
 hole(s) once they wake up.
+
 While they are not pictured in the image above, the CIA (Central Infection Agency) will
 occasionally drop “goodies” down for Socrates to use in his battle. The CIA may drop
 down a health kit (which can restore Socrates to full health), a charge kit to provide five
@@ -26,19 +28,19 @@ Socrates; Socrates should stay away from those if he can. From time to time, eac
 these (good and bad) objects will appear around the perimeter of the dish and will
 disappear after a short time (they dissolve in the corrosive agar of the dish).
 
-
+## CONTROLS
 You, the player, will use the following keystrokes to control Socrates:
-• Left arrow key or the ‘a’ key: Moves Socrates counterclockwise
-• Right arrow key or the ‘d’ key: Moves Socrates clockwise
-• Space bar: Fires disinfectant spray if Socrates has spray left
-• Enter key: Fires the omnidirectional flamethrower if Socrates has flamethrower
+- Left arrow key or the ‘a’ key: Moves Socrates counterclockwise
+- Right arrow key or the ‘d’ key: Moves Socrates clockwise
+- Space bar: Fires disinfectant spray if Socrates has spray left
+- Enter key: Fires the omnidirectional flamethrower if Socrates has flamethrower
 charges left
-• The ‘q’ key: Quits the game
+- The ‘q’ key: Quits the game
 
 
 Points are awarded (or taken away) as follows:
-• When Socrates picks up a Restore Health Goodie: 250 points
-• When Socrates picks up a Flamethrower Charge Goodie: 300 points
-• When Socrates picks up an Extra Life Goodie: 500 points
-• When Socrates kills a bacterium of any type: 100 points
-• When Socrates comes into contact with a fungus: −50 points
+- When Socrates picks up a Restore Health Goodie: 250 points
+- When Socrates picks up a Flamethrower Charge Goodie: 300 points
+- When Socrates picks up an Extra Life Goodie: 500 points
+- When Socrates kills a bacterium of any type: 100 points
+- When Socrates comes into contact with a fungus: −50 points
